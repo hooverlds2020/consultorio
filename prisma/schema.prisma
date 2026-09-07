@@ -1,0 +1,426 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// BLOQUE 1 — Usuarios y Roles
+// ==========================================
+
+enum Rol {
+  SUPER_ADMIN
+  RECEPCIONISTA
+  DENTISTA
+  TECNICO_LAB
+}
+
+model Usuario {
+  id           String   @id @default(cuid())
+  nombre       String
+  email        String   @unique
+  passwordHash String
+  rol          Rol
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  historiales           HistorialClinico[]
+  odontogramas          Odontograma[]
+  citasComoDentista     Cita[]                  @relation("CitaDentista")
+  cotizacionesCreadas   Cotizacion[]
+  ordenesSolicitadas    OrdenLaboratorio[]      @relation("OrdenDentista")
+  ordenesAsignadas      OrdenLaboratorio[]      @relation("OrdenTecnico")
+  pagosRegistrados      Pago[]
+  movimientosInventario MovimientoInventario[]
+  consentimientos       Consentimiento[]
+
+  @@map("usuarios")
+}
+
+// ==========================================
+// BLOQUE 2 — Pacientes
+// ==========================================
+
+model Paciente {
+  id                         String   @id @default(cuid())
+  nombre                     String
+  apellidos                  String
+  fechaNacimiento            DateTime
+  telefono                   String?
+  whatsapp                   String?
+  direccion                  String?
+  alergias                   String?
+  enfermedadesSistemicas     String?
+  medicamentosActuales       String?
+  contactoEmergenciaNombre   String?
+  contactoEmergenciaTelefono String?
+
+  eliminadoEn DateTime? // soft delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  historiales        HistorialClinico[]
+  odontogramas       Odontograma[]
+  citas              Cita[]
+  cotizaciones       Cotizacion[]
+  planesTratamiento  PlanTratamiento[]
+  ordenesLaboratorio OrdenLaboratorio[]
+  pagos              Pago[]
+  consentimientos    Consentimiento[]
+
+  @@index([nombre, apellidos])
+  @@map("pacientes")
+}
+
+// ==========================================
+// BLOQUE 3 — Historial Clínico + Odontograma
+// ==========================================
+
+model HistorialClinico {
+  id         String   @id @default(cuid())
+  pacienteId String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  dentistaId String
+  dentista   Usuario  @relation(fields: [dentistaId], references: [id])
+
+  fecha            DateTime @default(now())
+  notas            String
+  archivosAdjuntos String[]
+
+  eliminadoEn DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("historiales_clinicos")
+}
+
+enum TipoOdontograma {
+  ADULTO_32
+  INFANTIL_20
+}
+
+model Odontograma {
+  id         String   @id @default(cuid())
+  pacienteId String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  dentistaId String
+  dentista   Usuario  @relation(fields: [dentistaId], references: [id])
+
+  tipo        TipoOdontograma
+  fecha       DateTime        @default(now())
+  dientesJson Json
+
+  eliminadoEn DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("odontogramas")
+}
+
+// ==========================================
+// BLOQUE 4 — Agenda
+// ==========================================
+
+enum EstatusCita {
+  PROGRAMADA
+  CONFIRMADA
+  CANCELADA
+  NO_ASISTIO
+  COMPLETADA
+}
+
+model Cita {
+  id         String   @id @default(cuid())
+  pacienteId String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  dentistaId String
+  dentista   Usuario  @relation("CitaDentista", fields: [dentistaId], references: [id])
+
+  sillon          Int
+  fecha           DateTime
+  horaInicio      DateTime
+  horaFin         DateTime
+  tipoTratamiento String
+  estatus         EstatusCita @default(PROGRAMADA)
+  notas           String?
+
+  planTratamientoId String?
+  planTratamiento   PlanTratamiento? @relation(fields: [planTratamientoId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fecha, dentistaId])
+  @@index([fecha, sillon])
+  @@map("citas")
+}
+
+// ==========================================
+// BLOQUE 5 — Catálogo, Cotizaciones, Plan de Tratamiento
+// ==========================================
+
+model ServicioCatalogo {
+  id         String   @id @default(cuid())
+  nombre     String
+  precioBase Decimal  @db.Decimal(10, 2)
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  cotizacionItems CotizacionItem[]
+
+  @@map("servicios_catalogo")
+}
+
+enum EstatusCotizacion {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+}
+
+model Cotizacion {
+  id          String            @id @default(cuid())
+  pacienteId  String
+  paciente    Paciente          @relation(fields: [pacienteId], references: [id])
+  creadaPorId String
+  creadaPor   Usuario           @relation(fields: [creadaPorId], references: [id])
+
+  fecha   DateTime          @default(now())
+  estatus EstatusCotizacion @default(PENDIENTE)
+  total   Decimal           @db.Decimal(10, 2)
+
+  items           CotizacionItem[]
+  planTratamiento PlanTratamiento?
+
+  createdAt DateTime @default(now())
+
+  @@map("cotizaciones")
+}
+
+model CotizacionItem {
+  id           String           @id @default(cuid())
+  cotizacionId String
+  cotizacion   Cotizacion       @relation(fields: [cotizacionId], references: [id])
+  servicioId   String
+  servicio     ServicioCatalogo @relation(fields: [servicioId], references: [id])
+
+  cantidad       Int     @default(1)
+  precioUnitario Decimal @db.Decimal(10, 2)
+  subtotal       Decimal @db.Decimal(10, 2)
+
+  @@map("cotizacion_items")
+}
+
+enum EstatusPlan {
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+}
+
+model PlanTratamiento {
+  id           String     @id @default(cuid())
+  cotizacionId String     @unique
+  cotizacion   Cotizacion @relation(fields: [cotizacionId], references: [id])
+  pacienteId   String
+  paciente     Paciente   @relation(fields: [pacienteId], references: [id])
+
+  estatus     EstatusPlan @default(EN_CURSO)
+  totalPlan   Decimal     @db.Decimal(10, 2)
+  totalPagado Decimal     @default(0) @db.Decimal(10, 2)
+
+  citas Cita[]
+  pagos Pago[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("planes_tratamiento")
+}
+
+// ==========================================
+// BLOQUE 6 — Órdenes de Laboratorio
+// ==========================================
+
+enum TipoTrabajoLab {
+  CORONA
+  PUENTE
+  PROTESIS_TOTAL
+  PROTESIS_PARCIAL
+  PLACA_GUARDA
+  OTRO
+}
+
+enum EstatusOrdenLab {
+  RECIBIDO
+  EN_PROCESO
+  TERMINADO
+  ENTREGADO
+}
+
+model OrdenLaboratorio {
+  id                String   @id @default(cuid())
+  pacienteId        String
+  paciente          Paciente @relation(fields: [pacienteId], references: [id])
+  dentistaId        String
+  dentista          Usuario  @relation("OrdenDentista", fields: [dentistaId], references: [id])
+  tecnicoAsignadoId String?
+  tecnicoAsignado   Usuario? @relation("OrdenTecnico", fields: [tecnicoAsignadoId], references: [id])
+
+  tipoTrabajo TipoTrabajoLab
+  tonoDiente  String?
+  material    String?
+  diente      String?
+  notas       String?
+
+  estatus              EstatusOrdenLab @default(RECIBIDO)
+  fechaSolicitud       DateTime        @default(now())
+  fechaEntregaEstimada DateTime?
+  fechaEntregaReal     DateTime?
+
+  eliminadoEn DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("ordenes_laboratorio")
+}
+
+// ==========================================
+// BLOQUE 7 — Pagos
+// ==========================================
+
+enum MetodoPago {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+}
+
+model Pago {
+  id                String           @id @default(cuid())
+  pacienteId        String
+  paciente          Paciente         @relation(fields: [pacienteId], references: [id])
+  planTratamientoId String?
+  planTratamiento   PlanTratamiento? @relation(fields: [planTratamientoId], references: [id])
+  registradoPorId   String
+  registradoPor     Usuario          @relation(fields: [registradoPorId], references: [id])
+
+  monto       Decimal    @db.Decimal(10, 2)
+  metodo      MetodoPago
+  fecha       DateTime   @default(now())
+  folioRecibo String     @unique
+
+  eliminadoEn DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([fecha])
+  @@map("pagos")
+}
+
+// ==========================================
+// BLOQUE 8 — Inventario
+// ==========================================
+
+model Insumo {
+  id           String   @id @default(cuid())
+  nombre       String
+  unidadMedida String
+  stockActual  Decimal  @db.Decimal(10, 2)
+  stockMinimo  Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  movimientos MovimientoInventario[]
+
+  @@map("insumos")
+}
+
+enum TipoMovimientoInventario {
+  ENTRADA
+  SALIDA
+}
+
+model MovimientoInventario {
+  id              String                   @id @default(cuid())
+  insumoId        String
+  insumo          Insumo                   @relation(fields: [insumoId], references: [id])
+  tipo            TipoMovimientoInventario
+  cantidad        Decimal                  @db.Decimal(10, 2)
+  registradoPorId String
+  registradoPor   Usuario                  @relation(fields: [registradoPorId], references: [id])
+  motivo          String?
+  fecha           DateTime                 @default(now())
+
+  @@map("movimientos_inventario")
+}
+
+// ==========================================
+// BLOQUE 9 — Consentimientos Informados
+// ==========================================
+
+model Consentimiento {
+  id         String   @id @default(cuid())
+  pacienteId String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  dentistaId String
+  dentista   Usuario  @relation(fields: [dentistaId], references: [id])
+
+  tipoTratamiento     String
+  textoConsentimiento String
+  firmaImagenPath     String
+  fechaFirma          DateTime @default(now())
+
+  eliminadoEn DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("consentimientos")
+}
+
+// ==========================================
+// BLOQUE 10 — Landing Pública (CMS)
+// ==========================================
+
+enum SeccionLanding {
+  HERO
+  SERVICIOS
+  NOSOTROS
+  TESTIMONIOS
+  CONTACTO
+}
+
+model ConfigLanding {
+  id            String         @id @default(cuid())
+  seccion       SeccionLanding @unique
+  contenidoJson Json
+  updatedAt     DateTime       @updatedAt
+
+  @@map("config_landing")
+}
+
+enum TipoGaleria {
+  ANTES_DESPUES
+  GENERAL
+}
+
+model GaleriaImagen {
+  id                String      @id @default(cuid())
+  tipo              TipoGaleria
+  imagenAntesPath   String?
+  imagenDespuesPath String?
+  orden             Int         @default(0)
+  activo            Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+
+  @@map("galeria_imagenes")
+}
+
+model Testimonio {
+  id             String   @id @default(cuid())
+  nombrePaciente String
+  texto          String
+  calificacion   Int?
+  orden          Int      @default(0)
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@map("testimonios")
+}

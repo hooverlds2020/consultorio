@@ -1,0 +1,3 @@
+Esta carpeta se monta como volumen Docker para archivos subidos
+(radiografías, firmas de consentimiento, imágenes de la galería).
+No borrar este archivo si la carpeta queda vacía momentáneamente.
