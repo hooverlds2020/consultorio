@@ -18,57 +18,50 @@ export default function NavPanel({
   const [abierto, setAbierto] = useState(false);
 
   return (
-    <header className="bg-white border-b shadow-sm sticky top-0 z-20">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6 min-w-0 flex-1">
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-clinica-azulOscuro truncate">
-              Laboratorio y Consultorio Dental
-            </p>
-            <p className="text-xs text-gray-500 truncate">
-              {nombreUsuario} · {nombreRol}
-            </p>
-          </div>
-
-          {/* Navegación de escritorio */}
-          <nav className="hidden md:flex gap-4 text-sm text-gray-600">
-            {enlaces.map((e) => (
-              <Link key={e.href} href={e.href} className="hover:text-clinica-azul whitespace-nowrap">
-                {e.label}
-              </Link>
-            ))}
-          </nav>
+    <header className="sticky top-0 z-50 bg-white border-b w-full">
+      <div className="max-w-[1200px] mx-auto px-4 h-[60px] flex items-center justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-bold text-sm text-[#1a5a8a]">
+            Laboratorio y Consultorio Dental
+          </p>
+          <p className="truncate text-[11px] text-gray-500">
+            {nombreUsuario} · {nombreRol}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:block">
-            <CerrarSesionBoton />
-          </div>
+        {/* Navegación de escritorio — con 10 enlaces, solo cabe cómoda desde lg */}
+        <nav className="hidden lg:flex items-center gap-4 text-sm text-gray-600 ml-4">
+          {enlaces.map((e) => (
+            <Link key={e.href} href={e.href} className="hover:text-clinica-azul whitespace-nowrap">
+              {e.label}
+            </Link>
+          ))}
+          <CerrarSesionBoton />
+        </nav>
 
-          {/* Botón hamburguesa — solo visible en móvil, área táctil de 44px */}
-          <button
-            type="button"
-            onClick={() => setAbierto((prev) => !prev)}
-            aria-label="Abrir menú"
-            aria-expanded={abierto}
-            className="md:hidden flex items-center justify-center w-11 h-11 -mr-2 text-clinica-azulOscuro"
-          >
-            {abierto ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
-        </div>
+        {/* Botón hamburguesa — visible por debajo de lg, área táctil 44px */}
+        <button
+          type="button"
+          onClick={() => setAbierto((prev) => !prev)}
+          aria-label="Abrir menú"
+          aria-expanded={abierto}
+          className="lg:hidden w-11 h-11 flex items-center justify-center text-[#1a5a8a] shrink-0"
+        >
+          {abierto ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      {/* Panel desplegable en móvil */}
+      {/* Panel desplegable — por debajo de lg */}
       {abierto && (
-        <nav className="md:hidden border-t bg-white px-4 py-2">
+        <nav className="lg:hidden border-t bg-white px-4 py-2 max-h-[calc(100vh-60px)] overflow-y-auto">
           <ul className="flex flex-col">
             {enlaces.map((e) => (
               <li key={e.href}>

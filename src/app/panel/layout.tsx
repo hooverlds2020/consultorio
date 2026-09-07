@@ -48,7 +48,7 @@ export default async function PanelLayout({
         nombreUsuario={session.user.name}
         nombreRol={NOMBRES_ROL[rol]}
       />
-      <main className="max-w-6xl mx-auto px-4 py-4 md:py-6">{children}</main>
+      <main className="max-w-[1200px] mx-auto px-4 py-4 md:py-6 w-full">{children}</main>
     </div>
   );
 }

@@ -28,7 +28,7 @@ function Tarjeta({
   href?: string;
 }) {
   const contenido = (
-    <div className="bg-white rounded-lg shadow-sm p-5 h-full">
+    <div className="bg-white p-4 md:p-5 rounded-xl shadow-sm border h-full">
       <h3 className="text-sm font-medium text-gray-500 mb-3">{titulo}</h3>
       {children}
     </div>
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-clinica-azulOscuro mb-6">
+      <h1 className="text-[18px] md:text-2xl font-bold text-clinica-azulOscuro mb-4 md:mb-6">
         Bienvenido, {session.user.name}
       </h1>
 

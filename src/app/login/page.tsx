@@ -34,62 +34,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-clinica-azulClaro flex flex-col md:flex-row">
-      {/* Lado izquierdo — branding, solo visible en escritorio */}
-      <div className="hidden md:flex md:w-1/2 bg-white items-center justify-center p-8">
-        <div className="text-center max-w-sm">
-          <h1 className="text-3xl font-bold text-clinica-azulOscuro">
-            Laboratorio y Consultorio Dental
-          </h1>
-          <p className="text-gray-600 mt-2">Sistema de administración clínica</p>
-        </div>
-      </div>
+    <div className="min-h-screen w-full bg-[#eaf2fb] flex items-center justify-center p-4">
+      <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <h1 className="text-center text-[20px] font-bold text-[#1a5a8a] mb-6">
+          Acceso al sistema
+        </h1>
 
-      {/* Lado del formulario */}
-      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-4">
-        <form
-          onSubmit={handleSubmit}
-          className="w-full max-w-[380px] bg-white rounded-xl shadow-lg p-6 md:p-8"
-        >
-          <h2 className="text-center text-xl font-bold text-clinica-azulOscuro mb-6">
-            Acceso al sistema
-          </h2>
+        {error && (
+          <p className="bg-red-50 text-red-600 text-sm rounded-lg p-3 mb-4">{error}</p>
+        )}
 
-          {error && (
-            <p className="bg-red-50 text-red-600 text-sm rounded-md p-3 mb-4">{error}</p>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Correo</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 mt-1 px-3 border rounded-lg text-base focus:ring-2 focus:ring-clinica-azul outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Contraseña</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 mt-1 px-3 border rounded-lg text-base focus:ring-2 focus:ring-clinica-azul outline-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={cargando}
-              className="w-full h-12 bg-clinica-azul hover:bg-clinica-azulOscuro text-white rounded-lg font-medium text-base mt-2 transition disabled:opacity-60"
-            >
-              {cargando ? "Entrando..." : "Entrar"}
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700">Correo</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full h-[48px] rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700">Contraseña</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 w-full h-[48px] rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={cargando}
+            className="w-full h-[48px] rounded-xl bg-[#1f6fb5] text-white font-medium text-[16px] mt-2 active:scale-[0.98] transition disabled:opacity-60"
+          >
+            {cargando ? "Entrando..." : "Entrar"}
+          </button>
         </form>
       </div>
     </div>
