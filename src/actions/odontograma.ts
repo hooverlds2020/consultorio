@@ -7,11 +7,14 @@ import { prisma } from "@/lib/prisma";
 import { puedeEditarClinico } from "@/lib/permisos";
 import type { DientesJson } from "@/lib/odontograma";
 import type { Prisma } from "@prisma/client";
+import type { CambioDiente } from "@/components/odontograma/historialUtils";
 
 export async function guardarOdontograma(
   pacienteId: string,
   tipo: "ADULTO_32" | "INFANTIL_20",
-  dientes: DientesJson
+  dientes: DientesJson,
+  motivo: string,
+  diff: CambioDiente[]
 ): Promise<{ ok: boolean; mensaje?: string }> {
   const session = await getServerSession(authOptions);
 
@@ -19,17 +22,23 @@ export async function guardarOdontograma(
     return { ok: false, mensaje: "No tienes permiso para editar el odontograma." };
   }
 
+  if (!motivo.trim()) {
+    return { ok: false, mensaje: "El motivo / procedimiento es obligatorio." };
+  }
+
   const paciente = await prisma.paciente.findUnique({ where: { id: pacienteId } });
   if (!paciente || paciente.eliminadoEn) {
     return { ok: false, mensaje: "El paciente no existe." };
   }
+
+  const contenido = { dientes, motivo: motivo.trim(), diff };
 
   await prisma.odontograma.create({
     data: {
       pacienteId,
       dentistaId: session.user.id,
       tipo,
-      dientesJson: dientes as unknown as Prisma.InputJsonValue,
+      dientesJson: contenido as unknown as Prisma.InputJsonValue,
     },
   });
 

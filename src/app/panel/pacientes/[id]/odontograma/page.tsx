@@ -4,8 +4,9 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { puedeGestionarPacientes, puedeEditarClinico } from "@/lib/permisos";
 import { prisma } from "@/lib/prisma";
-import { odontogramaVacio, type DientesJson } from "@/lib/odontograma";
-import OdontogramaEditor from "@/components/odontograma/OdontogramaEditor";
+import { odontogramaVacio } from "@/lib/odontograma";
+import { extraerMapaDientes, extraerMotivo, extraerDiff } from "@/components/odontograma/historialUtils";
+import OdontogramaConHistorial from "@/components/odontograma/OdontogramaConHistorial";
 
 export default async function OdontogramaPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -27,16 +28,26 @@ export default async function OdontogramaPage({ params }: { params: { id: string
   });
 
   const tipo = ultimoOdontograma?.tipo ?? "ADULTO_32";
-  const dientesIniciales =
-    (ultimoOdontograma?.dientesJson as unknown as DientesJson) ?? odontogramaVacio(tipo);
+  const dientesActuales = ultimoOdontograma
+    ? extraerMapaDientes(ultimoOdontograma.dientesJson)
+    : odontogramaVacio(tipo);
 
-  const versionesAnteriores = await prisma.odontograma.findMany({
+  const registrosAnteriores = await prisma.odontograma.findMany({
     where: { pacienteId: paciente.id, eliminadoEn: null },
     orderBy: { fecha: "desc" },
     skip: ultimoOdontograma ? 1 : 0,
     take: 10,
     include: { dentista: { select: { nombre: true } } },
   });
+
+  const versiones = registrosAnteriores.map((v) => ({
+    id: v.id,
+    fecha: v.fecha.toISOString(),
+    dentistaNombre: v.dentista.nombre,
+    motivo: extraerMotivo(v.dientesJson),
+    diff: extraerDiff(v.dientesJson),
+    dientes: extraerMapaDientes(v.dientesJson),
+  }));
 
   return (
     <div>
@@ -58,30 +69,18 @@ export default async function OdontogramaPage({ params }: { params: { id: string
       {!ultimoOdontograma && puedeEditar && (
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">
-            Este paciente aún no tiene odontograma. Selecciona el tipo para empezar:
+            Este paciente aún no tiene odontograma. Marca los dientes y guarda la primera versión.
           </p>
         </div>
       )}
 
-      <OdontogramaEditor
+      <OdontogramaConHistorial
         pacienteId={paciente.id}
         tipo={tipo}
-        dientesIniciales={dientesIniciales}
+        dientesActuales={dientesActuales}
         soloLectura={!puedeEditar}
+        versiones={versiones}
       />
-
-      {versionesAnteriores.length > 0 && (
-        <div className="mt-10">
-          <h2 className="font-medium text-clinica-azulOscuro mb-3">Versiones anteriores</h2>
-          <ul className="text-sm text-gray-600 space-y-1">
-            {versionesAnteriores.map((v) => (
-              <li key={v.id}>
-                {new Date(v.fecha).toLocaleDateString("es-MX")} — {v.dentista.nombre}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

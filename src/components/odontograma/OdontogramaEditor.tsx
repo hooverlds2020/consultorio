@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   COLOR_ESTADO,
@@ -13,6 +13,7 @@ import {
   type DientesJson,
 } from "@/lib/odontograma";
 import { guardarOdontograma } from "@/actions/odontograma";
+import { calcularDiff } from "./historialUtils";
 import ToothSVG from "./ToothSVG";
 
 type Props = {
@@ -20,6 +21,9 @@ type Props = {
   tipo: "ADULTO_32" | "INFANTIL_20";
   dientesIniciales: DientesJson;
   soloLectura?: boolean;
+  /** Cuando se está viendo una versión pasada (modo solo lectura forzado). */
+  versionEnVisualizacion?: { fecha: string; dientes: DientesJson } | null;
+  onVolverAEditar?: () => void;
 };
 
 export default function OdontogramaEditor({
@@ -27,18 +31,27 @@ export default function OdontogramaEditor({
   tipo,
   dientesIniciales,
   soloLectura = false,
+  versionEnVisualizacion = null,
+  onVolverAEditar,
 }: Props) {
   const [dientes, setDientes] = useState<DientesJson>(dientesIniciales);
+  const [motivo, setMotivo] = useState("");
   const [isPending, startTransition] = useTransition();
   const [guardado, setGuardado] = useState(false);
+  const [error, setError] = useState("");
+  const baselineRef = useRef<DientesJson>(dientesIniciales);
   const router = useRouter();
 
   const esInfantil = tipo === "INFANTIL_20";
   const { arribaeDerecha, arribaIzquierda, abajoIzquierda, abajoDerecha } =
     esInfantil ? numerosInfantil() : numerosAdulto();
 
+  // Si estamos viendo una versión pasada, esos dientes mandan y todo es de solo lectura.
+  const dientesMostrados = versionEnVisualizacion ? versionEnVisualizacion.dientes : dientes;
+  const modoSoloLectura = soloLectura || !!versionEnVisualizacion;
+
   function handleClickDiente(numero: number) {
-    if (soloLectura) return;
+    if (modoSoloLectura) return;
     setGuardado(false);
     setDientes((prev) => {
       const actual = prev[String(numero)]?.estado ?? "SANO";
@@ -50,42 +63,75 @@ export default function OdontogramaEditor({
   }
 
   function handleGuardar() {
+    setError("");
+    if (!motivo.trim()) {
+      setError("Escribe el motivo o procedimiento antes de guardar.");
+      return;
+    }
+    const diff = calcularDiff(baselineRef.current, dientes);
+    if (diff.length === 0) {
+      setError("No hay cambios respecto a la última versión guardada.");
+      return;
+    }
     startTransition(async () => {
-      const resultado = await guardarOdontograma(pacienteId, tipo, dientes);
+      const resultado = await guardarOdontograma(pacienteId, tipo, dientes, motivo, diff);
       if (resultado.ok) {
         setGuardado(true);
+        setMotivo("");
+        baselineRef.current = dientes;
         router.refresh();
+      } else {
+        setError(resultado.mensaje ?? "Error al guardar.");
       }
     });
   }
 
-  function renderFila(numeros: number[], arcada: "superior" | "inferior") {
-    return numeros.map((n) => (
-      <ToothSVG
-        key={n}
-        numero={n}
-        estado={dientes[String(n)]?.estado ?? "SANO"}
-        tipo={tipoDiente(n, esInfantil)}
-        arcada={arcada}
-        onClick={() => handleClickDiente(n)}
-        soloLectura={soloLectura}
-      />
-    ));
+  function renderArcada(numeros: number[], arcada: "superior" | "inferior") {
+    return (
+      <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3">
+        {numeros.map((n) => (
+          <ToothSVG
+            key={n}
+            numero={n}
+            estado={dientesMostrados[String(n)]?.estado ?? "SANO"}
+            tipo={tipoDiente(n, esInfantil)}
+            arcada={arcada}
+            onClick={() => handleClickDiente(n)}
+            soloLectura={modoSoloLectura}
+          />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 overflow-x-auto snap-x snap-mandatory">
-        <div className="flex justify-center items-end gap-1.5 mb-1 min-w-[800px] snap-center">
-          {renderFila(arribaeDerecha, "superior")}
-          <div className="w-px self-stretch bg-gray-200 mx-1" />
-          {renderFila(arribaIzquierda, "superior")}
+      {versionEnVisualizacion && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg p-3 mb-4 flex items-center justify-between gap-3">
+          <span>
+            Viendo versión del{" "}
+            {new Date(versionEnVisualizacion.fecha).toLocaleString("es-MX")} (solo lectura)
+          </span>
+          {onVolverAEditar && (
+            <button
+              onClick={onVolverAEditar}
+              className="whitespace-nowrap font-medium hover:underline"
+            >
+              Volver a la versión actual
+            </button>
+          )}
         </div>
-        <div className="border-t my-3" />
-        <div className="flex justify-center items-start gap-1.5 min-w-[800px] snap-center">
-          {renderFila(abajoDerecha, "inferior")}
-          <div className="w-px self-stretch bg-gray-200 mx-1" />
-          {renderFila(abajoIzquierda, "inferior")}
+      )}
+
+      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 space-y-4">
+        <div>
+          <p className="text-xs text-gray-400 mb-1">Arcada superior</p>
+          {renderArcada(arribaeDerecha.concat(arribaIzquierda), "superior")}
+        </div>
+        <div className="border-t" />
+        <div>
+          <p className="text-xs text-gray-400 mb-1">Arcada inferior</p>
+          {renderArcada(abajoDerecha.concat(abajoIzquierda), "inferior")}
         </div>
       </div>
 
@@ -101,16 +147,33 @@ export default function OdontogramaEditor({
         ))}
       </div>
 
-      {!soloLectura && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleGuardar}
-            disabled={isPending}
-            className="bg-clinica-azul text-white px-5 py-2 rounded-md font-medium hover:bg-clinica-azulOscuro transition disabled:opacity-60"
-          >
-            {isPending ? "Guardando..." : "Guardar nueva versión"}
-          </button>
-          {guardado && <span className="text-green-600 text-sm">Guardado ✓</span>}
+      {!modoSoloLectura && (
+        <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+          {error && (
+            <p className="bg-red-50 text-red-600 text-sm rounded-md p-3">{error}</p>
+          )}
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">
+              Motivo / procedimiento <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Ej. Corona en pieza 42"
+              className="w-full h-11 border border-gray-300 rounded-lg px-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-clinica-azul"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleGuardar}
+              disabled={isPending}
+              className="h-11 px-5 bg-clinica-azul text-white rounded-lg font-medium hover:bg-clinica-azulOscuro transition disabled:opacity-60"
+            >
+              {isPending ? "Guardando..." : "Guardar nueva versión"}
+            </button>
+            {guardado && <span className="text-green-600 text-sm">Guardado ✓</span>}
+          </div>
         </div>
       )}
     </div>
