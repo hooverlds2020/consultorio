@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { listarServiciosActivos } from "@/actions/catalogo";
 import { listarTestimoniosActivos, listarGaleriaActiva } from "@/actions/landing";
+import NavLanding from "@/components/landing/NavLanding";
 
 // La landing consulta la base de datos en cada visita (contenido editable
 // desde el panel), así que no debe pre-construirse como página estática
@@ -47,25 +48,7 @@ export default async function InicioPage() {
   return (
     <main className="min-h-screen bg-white text-gray-800">
       {/* Barra de navegación */}
-      <header className="sticky top-0 bg-white/95 backdrop-blur border-b z-10">
-        <nav className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="font-bold text-clinica-azulOscuro">Laboratorio y Consultorio Dental</span>
-          <div className="hidden md:flex gap-6 text-sm text-gray-600">
-            <a href="#inicio" className="hover:text-clinica-azul">Inicio</a>
-            <a href="#servicios" className="hover:text-clinica-azul">Servicios</a>
-            <a href="#nosotros" className="hover:text-clinica-azul">Nosotros</a>
-            <a href="#galeria" className="hover:text-clinica-azul">Galería</a>
-            <a href="#testimonios" className="hover:text-clinica-azul">Testimonios</a>
-            <a href="#contacto" className="hover:text-clinica-azul">Contacto</a>
-          </div>
-          <a
-            href="/login"
-            className="text-sm border border-clinica-azul text-clinica-azul px-4 py-1.5 rounded-md hover:bg-clinica-azulClaro transition"
-          >
-            Acceso al panel
-          </a>
-        </nav>
-      </header>
+      <NavLanding />
 
       {/* Hero */}
       <section id="inicio" className="bg-clinica-azulClaro">

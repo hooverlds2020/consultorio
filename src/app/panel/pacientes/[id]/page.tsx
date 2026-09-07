@@ -24,51 +24,43 @@ export default async function FichaPacientePage({ params }: { params: { id: stri
 
   const actualizarConId = actualizarPaciente.bind(null, paciente.id);
 
+  const pestanas = [
+    { href: `/panel/pacientes/${paciente.id}/historial`, label: "Historial clínico" },
+    { href: `/panel/pacientes/${paciente.id}/odontograma`, label: "Odontograma" },
+    { href: `/panel/pacientes/${paciente.id}/cotizaciones`, label: "Cotizaciones" },
+    { href: `/panel/pacientes/${paciente.id}/pagos`, label: "Pagos" },
+    { href: `/panel/pacientes/${paciente.id}/consentimientos`, label: "Consentimientos" },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-clinica-azulOscuro">
+    <div className="w-full max-w-full">
+      <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-semibold text-clinica-azulOscuro truncate">
             {paciente.nombre} {paciente.apellidos}
           </h1>
           <p className="text-gray-500 text-sm">{calcularEdad(paciente.fechaNacimiento)} años</p>
         </div>
         {esSuperAdmin(session.user.rol) && (
-          <EliminarPacienteBoton pacienteId={paciente.id} />
+          <div className="w-full md:w-auto">
+            <EliminarPacienteBoton pacienteId={paciente.id} />
+          </div>
         )}
       </div>
 
-      <div className="flex gap-3 mb-6">
-        <Link
-          href={`/panel/pacientes/${paciente.id}/historial`}
-          className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition"
-        >
-          Historial clínico
-        </Link>
-        <Link
-          href={`/panel/pacientes/${paciente.id}/odontograma`}
-          className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition"
-        >
-          Odontograma
-        </Link>
-        <Link
-          href={`/panel/pacientes/${paciente.id}/cotizaciones`}
-          className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition"
-        >
-          Cotizaciones
-        </Link>
-        <Link
-          href={`/panel/pacientes/${paciente.id}/pagos`}
-          className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition"
-        >
-          Pagos
-        </Link>
-        <Link
-          href={`/panel/pacientes/${paciente.id}/consentimientos`}
-          className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition"
-        >
-          Consentimientos
-        </Link>
+      {/* Pestañas — scrolleables horizontalmente en móvil, nunca se cortan */}
+      <div className="w-full overflow-x-auto -mx-4 px-4 mb-6">
+        <div className="flex gap-2 min-w-max py-1">
+          {pestanas.map((p) => (
+            <Link
+              key={p.href}
+              href={p.href}
+              className="whitespace-nowrap h-11 flex items-center text-sm border border-clinica-azul text-clinica-azul px-4 rounded-lg hover:bg-clinica-azulClaro transition"
+            >
+              {p.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       <PacienteForm

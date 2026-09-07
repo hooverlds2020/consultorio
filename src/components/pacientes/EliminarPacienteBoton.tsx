@@ -21,18 +21,18 @@ export default function EliminarPacienteBoton({ pacienteId }: { pacienteId: stri
 
   if (confirmando) {
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-3 text-sm w-full md:w-auto">
         <span className="text-gray-600">¿Eliminar este paciente?</span>
         <button
           onClick={handleEliminar}
           disabled={isPending}
-          className="text-red-600 font-medium hover:underline disabled:opacity-50"
+          className="text-red-600 font-medium hover:underline disabled:opacity-50 h-11"
         >
           {isPending ? "Eliminando..." : "Sí, eliminar"}
         </button>
         <button
           onClick={() => setConfirmando(false)}
-          className="text-gray-500 hover:underline"
+          className="text-gray-500 hover:underline h-11"
         >
           Cancelar
         </button>
@@ -43,7 +43,7 @@ export default function EliminarPacienteBoton({ pacienteId }: { pacienteId: stri
   return (
     <button
       onClick={() => setConfirmando(true)}
-      className="text-red-600 text-sm hover:underline"
+      className="w-full md:w-auto h-11 md:h-auto border border-red-200 md:border-0 rounded-lg md:rounded-none text-red-600 text-sm hover:underline hover:bg-red-50 md:hover:bg-transparent transition"
     >
       Eliminar paciente
     </button>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { esSuperAdmin } from "@/lib/permisos";
 import { prisma } from "@/lib/prisma";
-import FilaUsuario from "@/components/usuarios/FilaUsuario";
+import { FilaUsuarioTabla, TarjetaUsuario } from "@/components/usuarios/FilaUsuario";
 
 export default async function UsuariosPage() {
   const session = await getServerSession(authOptions);
@@ -20,17 +20,18 @@ export default async function UsuariosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-semibold text-clinica-azulOscuro">Usuarios</h1>
         <Link
           href="/panel/usuarios/nuevo"
-          className="bg-clinica-azul text-white px-4 py-2 rounded-md hover:bg-clinica-azulOscuro transition"
+          className="bg-clinica-azul text-white px-4 py-2 rounded-md hover:bg-clinica-azulOscuro transition text-center"
         >
           + Nuevo usuario
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Tabla — solo escritorio */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
@@ -42,10 +43,17 @@ export default async function UsuariosPage() {
           </thead>
           <tbody>
             {usuarios.map((u) => (
-              <FilaUsuario key={u.id} usuario={u} esUsuarioActual={u.id === session.user.id} />
+              <FilaUsuarioTabla key={u.id} usuario={u} esUsuarioActual={u.id === session.user.id} />
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Tarjetas — móvil y tablet */}
+      <div className="grid grid-cols-1 gap-3 lg:hidden">
+        {usuarios.map((u) => (
+          <TarjetaUsuario key={u.id} usuario={u} esUsuarioActual={u.id === session.user.id} />
+        ))}
       </div>
     </div>
   );

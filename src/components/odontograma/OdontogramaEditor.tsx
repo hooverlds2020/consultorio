@@ -75,14 +75,14 @@ export default function OdontogramaEditor({
 
   return (
     <div>
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-4 overflow-x-auto">
-        <div className="flex justify-center items-end gap-1.5 mb-1 min-w-max">
+      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 overflow-x-auto snap-x snap-mandatory">
+        <div className="flex justify-center items-end gap-1.5 mb-1 min-w-[800px] snap-center">
           {renderFila(arribaeDerecha, "superior")}
           <div className="w-px self-stretch bg-gray-200 mx-1" />
           {renderFila(arribaIzquierda, "superior")}
         </div>
         <div className="border-t my-3" />
-        <div className="flex justify-center items-start gap-1.5 min-w-max">
+        <div className="flex justify-center items-start gap-1.5 min-w-[800px] snap-center">
           {renderFila(abajoDerecha, "inferior")}
           <div className="w-px self-stretch bg-gray-200 mx-1" />
           {renderFila(abajoIzquierda, "inferior")}

@@ -118,7 +118,7 @@ export default function ToothSVG({ numero, estado, tipo, onClick, soloLectura }:
       disabled={soloLectura}
       onClick={onClick}
       title={`Diente ${numero} — ${NOMBRE_ESTADO[estado]}`}
-      className="flex flex-col items-center gap-0.5 disabled:cursor-default group"
+      className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] disabled:cursor-default group"
     >
       <svg width={ancho + 6} height={altoTotal + 4} viewBox={`-2 -6 ${ancho + 4} ${altoTotal + 8}`}>
         {esAusente ? (

@@ -2,6 +2,9 @@
 
 import { useRef, useState, useEffect } from "react";
 
+const ANCHO_INTERNO = 500;
+const ALTO_INTERNO = 180;
+
 export default function LienzoFirma({ onCambio }: { onCambio: (dataUrl: string | null) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dibujando = useRef(false);
@@ -17,10 +20,18 @@ export default function LienzoFirma({ onCambio }: { onCambio: (dataUrl: string |
     contexto.strokeStyle = "#1e293b";
   }, []);
 
+  // Escala la posición del toque/mouse a la resolución interna del canvas,
+  // porque el ancho visual (CSS, w-full) puede ser más angosto que
+  // ANCHO_INTERNO en pantallas pequeñas.
   function obtenerPosicion(evento: React.PointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    return { x: evento.clientX - rect.left, y: evento.clientY - rect.top };
+    const escalaX = ANCHO_INTERNO / rect.width;
+    const escalaY = ALTO_INTERNO / rect.height;
+    return {
+      x: (evento.clientX - rect.left) * escalaX,
+      y: (evento.clientY - rect.top) * escalaY,
+    };
   }
 
   function iniciarTrazo(evento: React.PointerEvent<HTMLCanvasElement>) {
@@ -56,20 +67,20 @@ export default function LienzoFirma({ onCambio }: { onCambio: (dataUrl: string |
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full">
       <canvas
         ref={canvasRef}
-        width={500}
-        height={180}
+        width={ANCHO_INTERNO}
+        height={ALTO_INTERNO}
         onPointerDown={iniciarTrazo}
         onPointerMove={continuarTrazo}
         onPointerUp={terminarTrazo}
         onPointerLeave={terminarTrazo}
-        className="w-full border border-gray-300 rounded-md bg-white touch-none cursor-crosshair"
+        className="w-full max-w-full border border-gray-300 rounded-md bg-white touch-none cursor-crosshair"
       />
       <div className="flex items-center justify-between mt-1">
         <p className="text-xs text-gray-400">Firma aquí con el dedo o el mouse</p>
-        <button type="button" onClick={limpiar} className="text-xs text-red-500 hover:underline">
+        <button type="button" onClick={limpiar} className="text-xs text-red-500 hover:underline h-8 px-2">
           Limpiar
         </button>
       </div>
