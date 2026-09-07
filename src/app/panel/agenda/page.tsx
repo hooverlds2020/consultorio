@@ -19,10 +19,5 @@ export default async function AgendaPage() {
     obtenerDentistas(),
   ]);
 
-  return (
-    <div>
-      <h1 className="text-2xl font-semibold text-clinica-azulOscuro mb-6">Agenda</h1>
-      <AgendaDia citasIniciales={citas} dentistas={dentistas} fechaInicial={hoy} />
-    </div>
-  );
+  return <AgendaDia citasIniciales={citas} dentistas={dentistas} fechaInicial={hoy} />;
 }

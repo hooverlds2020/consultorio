@@ -24,6 +24,29 @@ const OPCIONES_ESTATUS: EstatusCita[] = [
   "NO_ASISTIO",
 ];
 
+const PUNTO_COLUMNA = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500"];
+
+/**
+ * Devuelve una clase Tailwind ESTÁTICA (nunca generada dinámicamente)
+ * para el número de columnas en escritorio. Usar clases estáticas —en vez
+ * de construir el nombre con un template string— evita que el build de
+ * Tailwind las purgue por no poder detectarlas al analizar el código.
+ */
+function gridColsDesktop(cantidad: number): string {
+  switch (cantidad) {
+    case 1:
+      return "lg:grid-cols-1";
+    case 2:
+      return "lg:grid-cols-2";
+    case 3:
+      return "lg:grid-cols-3";
+    case 4:
+      return "lg:grid-cols-4";
+    default:
+      return "lg:grid-cols-5";
+  }
+}
+
 function formatoHora(fecha: Date | string): string {
   return new Date(fecha).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
 }
@@ -31,7 +54,7 @@ function formatoHora(fecha: Date | string): string {
 function TarjetaCita({ cita, onCambiarEstatus }: { cita: Cita; onCambiarEstatus: (id: string, estatus: EstatusCita) => void }) {
   return (
     <div
-      className="rounded-md p-2 text-xs border-l-4 bg-white shadow-sm"
+      className="rounded-xl p-3 text-sm border-l-4 bg-white"
       style={{ borderLeftColor: ESTATUS_CITA_COLOR[cita.estatus] }}
     >
       <p className="font-medium text-gray-800">
@@ -40,12 +63,12 @@ function TarjetaCita({ cita, onCambiarEstatus }: { cita: Cita; onCambiarEstatus:
       <p className="text-gray-700">
         {cita.paciente.nombre} {cita.paciente.apellidos}
       </p>
-      <p className="text-gray-500">{cita.tipoTratamiento}</p>
-      <p className="text-gray-400">Dr(a). {cita.dentista.nombre} · Sillón {cita.sillon}</p>
+      <p className="text-gray-500 text-xs">{cita.tipoTratamiento}</p>
+      <p className="text-gray-400 text-xs">Dr(a). {cita.dentista.nombre} · Sillón {cita.sillon}</p>
       <select
         value={cita.estatus}
         onChange={(e) => onCambiarEstatus(cita.id, e.target.value as EstatusCita)}
-        className="mt-1 w-full text-[11px] border border-gray-200 rounded px-1 py-0.5"
+        className="mt-2 w-full h-9 text-sm border border-gray-200 rounded-lg px-2"
       >
         {OPCIONES_ESTATUS.map((e) => (
           <option key={e} value={e}>
@@ -66,7 +89,7 @@ function TarjetaCita({ cita, onCambiarEstatus }: { cita: Cita; onCambiarEstatus:
           )}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 flex items-center justify-center gap-1 w-full text-[11px] bg-green-50 text-green-700 border border-green-200 rounded px-1 py-1 hover:bg-green-100 transition"
+          className="mt-2 flex items-center justify-center gap-1 w-full h-9 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg px-2 hover:bg-green-100 transition"
         >
           Enviar recordatorio WhatsApp
         </a>
@@ -129,91 +152,110 @@ export default function AgendaDia({
         }));
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => cargarFecha(sumarDiasEnZonaClinica(fecha, -1))}
-            className="border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50"
-          >
-            ←
-          </button>
+    <div className="w-full max-w-[1200px] mx-auto">
+      <h1 className="text-[22px] font-bold text-clinica-azulOscuro mb-4">Agenda</h1>
+
+      {/* Controles de fecha — botones grandes para el dedo */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => cargarFecha(sumarDiasEnZonaClinica(fecha, -1))}
+          className="w-11 h-11 shrink-0 border rounded-xl hover:bg-gray-50"
+          aria-label="Día anterior"
+        >
+          ←
+        </button>
+        <div className="flex-1">
           <input
             type="date"
             value={fecha}
             onChange={(e) => cargarFecha(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-1.5"
+            className="w-full h-11 rounded-xl border px-3 text-[16px] bg-gray-50 text-center font-medium"
           />
-          <button
-            onClick={() => cargarFecha(sumarDiasEnZonaClinica(fecha, 1))}
-            className="border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50"
-          >
-            →
-          </button>
-          <button
-            onClick={() => cargarFecha(hoyEnZonaClinica())}
-            className="text-sm text-clinica-azul hover:underline ml-2"
-          >
-            Hoy
-          </button>
         </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex border border-gray-300 rounded-md overflow-hidden text-sm">
-            <button
-              onClick={() => setVista("sillon")}
-              className={`px-3 py-1.5 ${vista === "sillon" ? "bg-clinica-azul text-white" : "bg-white text-gray-600"}`}
-            >
-              Por sillón
-            </button>
-            <button
-              onClick={() => setVista("dentista")}
-              className={`px-3 py-1.5 ${vista === "dentista" ? "bg-clinica-azul text-white" : "bg-white text-gray-600"}`}
-            >
-              Por dentista
-            </button>
-          </div>
-          <button
-            onClick={() => setMostrarForm(!mostrarForm)}
-            className="bg-clinica-azul text-white px-4 py-1.5 rounded-md text-sm hover:bg-clinica-azulOscuro transition"
-          >
-            + Nueva cita
-          </button>
-        </div>
+        <button
+          onClick={() => cargarFecha(sumarDiasEnZonaClinica(fecha, 1))}
+          className="w-11 h-11 shrink-0 border rounded-xl hover:bg-gray-50"
+          aria-label="Día siguiente"
+        >
+          →
+        </button>
+        <button
+          onClick={() => cargarFecha(hoyEnZonaClinica())}
+          className="h-11 px-4 shrink-0 text-clinica-azul font-medium text-sm"
+        >
+          Hoy
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className={mostrarForm ? "md:col-span-3" : "md:col-span-4"}>
-          <div
-            className={`grid gap-3 ${isPending ? "opacity-50" : ""}`}
-            style={{ gridTemplateColumns: `repeat(${columnas.length || 1}, minmax(0, 1fr))` }}
+      {/* Tabs + Nueva cita */}
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="flex w-full bg-gray-100 rounded-xl p-1">
+          <button
+            onClick={() => setVista("sillon")}
+            className={`flex-1 h-10 rounded-lg font-medium transition ${
+              vista === "sillon" ? "bg-clinica-azul text-white" : "text-gray-600"
+            }`}
           >
-            {columnas.map((col) => (
-              <div key={col.clave} className="bg-gray-50 rounded-lg p-3">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">{col.titulo}</h3>
-                <div className="space-y-2">
-                  {col.citas.length === 0 && (
-                    <p className="text-xs text-gray-400">Sin citas</p>
-                  )}
-                  {col.citas.map((cita) => (
-                    <TarjetaCita key={cita.id} cita={cita} onCambiarEstatus={handleCambiarEstatus} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+            Por sillón
+          </button>
+          <button
+            onClick={() => setVista("dentista")}
+            className={`flex-1 h-10 rounded-lg font-medium transition ${
+              vista === "dentista" ? "bg-clinica-azul text-white" : "text-gray-600"
+            }`}
+          >
+            Por dentista
+          </button>
         </div>
+        <button
+          onClick={() => setMostrarForm(!mostrarForm)}
+          className="w-full h-12 bg-clinica-azul text-white rounded-xl font-medium text-[16px] hover:bg-clinica-azulOscuro transition"
+        >
+          {mostrarForm ? "Cerrar formulario" : "+ Nueva cita"}
+        </button>
+      </div>
 
-        {mostrarForm && (
-          <div>
-            <NuevaCitaForm
-              accion={crearCita}
-              dentistas={dentistas}
-              fechaInicial={fecha}
-              onCreada={handleCitaCreada}
-            />
+      {mostrarForm && (
+        <div className="mb-6">
+          <NuevaCitaForm
+            accion={crearCita}
+            dentistas={dentistas}
+            fechaInicial={fecha}
+            onCreada={handleCitaCreada}
+          />
+        </div>
+      )}
+
+      {/* Columnas — 1 por fila en móvil, se acomodan en fila desde lg */}
+      <div
+        className={`grid grid-cols-1 ${gridColsDesktop(columnas.length)} gap-4 ${isPending ? "opacity-50" : ""}`}
+      >
+        {columnas.map((col, i) => (
+          <div key={col.clave} className="bg-white rounded-2xl border shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${PUNTO_COLUMNA[i % PUNTO_COLUMNA.length]}`} />
+                {col.titulo}
+              </h3>
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                {col.citas.length} cita{col.citas.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            {col.citas.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-xl">
+                <p className="text-sm">Sin citas</p>
+                <p className="text-xs mt-1">Toca + para agendar</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {col.citas.map((cita) => (
+                  <TarjetaCita key={cita.id} cita={cita} onCambiarEstatus={handleCambiarEstatus} />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
