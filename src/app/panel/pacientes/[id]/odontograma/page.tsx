@@ -40,7 +40,7 @@ export default async function OdontogramaPage({ params }: { params: { id: string
     include: { dentista: { select: { nombre: true } } },
   });
 
-  const versiones = registrosAnteriores.map((v) => ({
+  const versionesAnteriores = registrosAnteriores.map((v) => ({
     id: v.id,
     fecha: v.fecha.toISOString(),
     dentistaNombre: v.dentista.nombre,
@@ -48,6 +48,36 @@ export default async function OdontogramaPage({ params }: { params: { id: string
     diff: extraerDiff(v.dientesJson),
     dientes: extraerMapaDientes(v.dientesJson),
   }));
+
+  // Para el panel de detalle por diente, incluimos también la versión más
+  // reciente (la que se está editando) — así un cambio recién guardado
+  // aparece de inmediato en el historial de esa pieza, sin esperar a que
+  // se guarde una versión más.
+  const versionesParaDetalle = ultimoOdontograma
+    ? [
+        {
+          id: ultimoOdontograma.id,
+          fecha: ultimoOdontograma.fecha.toISOString(),
+          dentistaNombre: (
+            await prisma.usuario.findUnique({
+              where: { id: ultimoOdontograma.dentistaId },
+              select: { nombre: true },
+            })
+          )?.nombre ?? "—",
+          motivo: extraerMotivo(ultimoOdontograma.dientesJson),
+          diff: extraerDiff(ultimoOdontograma.dientesJson),
+          dientes: extraerMapaDientes(ultimoOdontograma.dientesJson),
+        },
+        ...versionesAnteriores,
+      ]
+    : versionesAnteriores;
+
+  const ultimaRadiografia = await prisma.historialClinico.findFirst({
+    where: { pacienteId: paciente.id, eliminadoEn: null, archivosAdjuntos: { isEmpty: false } },
+    orderBy: { fecha: "desc" },
+    select: { archivosAdjuntos: true },
+  });
+  const radiografiaReciente = ultimaRadiografia?.archivosAdjuntos[0] ?? null;
 
   return (
     <div>
@@ -79,7 +109,9 @@ export default async function OdontogramaPage({ params }: { params: { id: string
         tipo={tipo}
         dientesActuales={dientesActuales}
         soloLectura={!puedeEditar}
-        versiones={versiones}
+        versiones={versionesAnteriores}
+        versionesDetalle={versionesParaDetalle}
+        radiografiaReciente={radiografiaReciente}
       />
     </div>
   );

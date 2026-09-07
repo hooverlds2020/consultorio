@@ -15,6 +15,8 @@ import {
 import { guardarOdontograma } from "@/actions/odontograma";
 import { calcularDiff } from "./historialUtils";
 import ToothSVG from "./ToothSVG";
+import DetalleDienteModal from "./DetalleDienteModal";
+import type { VersionHistorial } from "./OdontogramaConHistorial";
 
 type Props = {
   pacienteId: string;
@@ -24,6 +26,9 @@ type Props = {
   /** Cuando se está viendo una versión pasada (modo solo lectura forzado). */
   versionEnVisualizacion?: { fecha: string; dientes: DientesJson } | null;
   onVolverAEditar?: () => void;
+  /** Para el panel de detalle por diente: historial de versiones y radiografía más reciente. */
+  versiones?: VersionHistorial[];
+  radiografiaReciente?: string | null;
 };
 
 export default function OdontogramaEditor({
@@ -33,12 +38,16 @@ export default function OdontogramaEditor({
   soloLectura = false,
   versionEnVisualizacion = null,
   onVolverAEditar,
+  versiones = [],
+  radiografiaReciente = null,
 }: Props) {
   const [dientes, setDientes] = useState<DientesJson>(dientesIniciales);
   const [motivo, setMotivo] = useState("");
   const [isPending, startTransition] = useTransition();
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
+  const [dienteEnDetalle, setDienteEnDetalle] = useState<number | null>(null);
+  const [notasModificadas, setNotasModificadas] = useState(false);
   const baselineRef = useRef<DientesJson>(dientesIniciales);
   const router = useRouter();
 
@@ -69,7 +78,7 @@ export default function OdontogramaEditor({
       return;
     }
     const diff = calcularDiff(baselineRef.current, dientes);
-    if (diff.length === 0) {
+    if (diff.length === 0 && !notasModificadas) {
       setError("No hay cambios respecto a la última versión guardada.");
       return;
     }
@@ -78,12 +87,23 @@ export default function OdontogramaEditor({
       if (resultado.ok) {
         setGuardado(true);
         setMotivo("");
+        setNotasModificadas(false);
         baselineRef.current = dientes;
         router.refresh();
       } else {
         setError(resultado.mensaje ?? "Error al guardar.");
       }
     });
+  }
+
+  function handleGuardarNota(numero: number, nota: string) {
+    if (modoSoloLectura) return;
+    setGuardado(false);
+    setNotasModificadas(true);
+    setDientes((prev) => ({
+      ...prev,
+      [String(numero)]: { ...prev[String(numero)], estado: prev[String(numero)]?.estado ?? "SANO", notas: nota },
+    }));
   }
 
   function renderArcada(numeros: number[], arcada: "superior" | "inferior") {
@@ -98,6 +118,7 @@ export default function OdontogramaEditor({
                 tipo={tipoDiente(n, esInfantil)}
                 arcada={arcada}
                 onClick={() => handleClickDiente(n)}
+                onVerDetalle={() => setDienteEnDetalle(n)}
                 soloLectura={modoSoloLectura}
               />
             </div>
@@ -177,6 +198,19 @@ export default function OdontogramaEditor({
             {guardado && <span className="text-green-600 text-sm">Guardado ✓</span>}
           </div>
         </div>
+      )}
+
+      {dienteEnDetalle !== null && (
+        <DetalleDienteModal
+          numero={dienteEnDetalle}
+          estadoActual={dientesMostrados[String(dienteEnDetalle)]?.estado ?? "SANO"}
+          notaActual={dientesMostrados[String(dienteEnDetalle)]?.notas ?? ""}
+          versiones={versiones}
+          radiografiaReciente={radiografiaReciente}
+          soloLectura={modoSoloLectura}
+          onCerrar={() => setDienteEnDetalle(null)}
+          onGuardarNota={(nota) => handleGuardarNota(dienteEnDetalle, nota)}
+        />
       )}
     </div>
   );

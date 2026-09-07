@@ -9,6 +9,7 @@ type Props = {
   tipo: TipoAnatomico;
   arcada: Arcada;
   onClick: () => void;
+  onVerDetalle?: () => void;
   soloLectura?: boolean;
 };
 
@@ -105,7 +106,7 @@ function pathRaiz(ancho: number, cantidad: number, largo: number): string[] {
   ];
 }
 
-export default function ToothSVG({ numero, estado, tipo, onClick, soloLectura }: Omit<Props, "arcada"> & { arcada?: Arcada }) {
+export default function ToothSVG({ numero, estado, tipo, onClick, onVerDetalle, soloLectura }: Omit<Props, "arcada"> & { arcada?: Arcada }) {
   const ancho = ANCHO[tipo];
   const largoRaiz = ALTO_RAIZ[tipo];
   const altoTotal = ALTO_CORONA + largoRaiz + 2;
@@ -113,38 +114,47 @@ export default function ToothSVG({ numero, estado, tipo, onClick, soloLectura }:
   const colorCorona = esAusente ? "#FFFFFF" : COLOR_ESTADO[estado];
 
   return (
-    <button
-      type="button"
-      disabled={soloLectura}
-      onClick={onClick}
-      title={`Diente ${numero} — ${NOMBRE_ESTADO[estado]}`}
-      className="flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[70px] shrink-0 disabled:cursor-default group"
-    >
-      <svg width={ancho + 6} height={altoTotal + 4} viewBox={`-2 -6 ${ancho + 4} ${altoTotal + 8}`}>
-        {esAusente ? (
-          <path
-            d={contornoCorona(ancho, CUSPIDES[tipo])}
-            fill="none"
-            stroke="#D1D5DB"
-            strokeWidth="1.2"
-            strokeDasharray="2.5,2"
-          />
-        ) : (
-          <>
-            {pathRaiz(ancho, CANTIDAD_RAICES[tipo], largoRaiz).map((d, i) => (
-              <path key={i} d={d} fill={COLOR_RAIZ} stroke={COLOR_BORDE} strokeWidth="1" />
-            ))}
+    <div className="flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[70px] shrink-0">
+      <button
+        type="button"
+        disabled={soloLectura}
+        onClick={onClick}
+        title={`Diente ${numero} — ${NOMBRE_ESTADO[estado]}. Toca para cambiar estado.`}
+        className="disabled:cursor-default group"
+      >
+        <svg width={ancho + 6} height={altoTotal + 4} viewBox={`-2 -6 ${ancho + 4} ${altoTotal + 8}`}>
+          {esAusente ? (
             <path
               d={contornoCorona(ancho, CUSPIDES[tipo])}
-              fill={colorCorona}
-              stroke={COLOR_BORDE}
+              fill="none"
+              stroke="#D1D5DB"
               strokeWidth="1.2"
-              className="transition-opacity group-hover:opacity-80"
+              strokeDasharray="2.5,2"
             />
-          </>
-        )}
-      </svg>
-      <span className="text-[10px] text-gray-500">{numero}</span>
-    </button>
+          ) : (
+            <>
+              {pathRaiz(ancho, CANTIDAD_RAICES[tipo], largoRaiz).map((d, i) => (
+                <path key={i} d={d} fill={COLOR_RAIZ} stroke={COLOR_BORDE} strokeWidth="1" />
+              ))}
+              <path
+                d={contornoCorona(ancho, CUSPIDES[tipo])}
+                fill={colorCorona}
+                stroke={COLOR_BORDE}
+                strokeWidth="1.2"
+                className="transition-opacity group-hover:opacity-80"
+              />
+            </>
+          )}
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={onVerDetalle}
+        title={`Ver detalle e historial del diente ${numero}`}
+        className="text-[10px] text-gray-500 hover:text-clinica-azul hover:underline underline-offset-2 px-1"
+      >
+        {numero}
+      </button>
+    </div>
   );
 }

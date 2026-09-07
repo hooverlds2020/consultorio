@@ -22,12 +22,17 @@ export default function OdontogramaConHistorial({
   dientesActuales,
   soloLectura,
   versiones,
+  versionesDetalle,
+  radiografiaReciente = null,
 }: {
   pacienteId: string;
   tipo: "ADULTO_32" | "INFANTIL_20";
   dientesActuales: DientesJson;
   soloLectura: boolean;
   versiones: VersionHistorial[];
+  /** Lista completa incluyendo la versión más reciente, para el panel de detalle por diente. */
+  versionesDetalle?: VersionHistorial[];
+  radiografiaReciente?: string | null;
 }) {
   const [versionEnVisualizacion, setVersionEnVisualizacion] = useState<VersionHistorial | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -55,6 +60,8 @@ export default function OdontogramaConHistorial({
         tipo={tipo}
         dientesIniciales={dientesActuales}
         soloLectura={soloLectura}
+        versiones={versionesDetalle ?? versiones}
+        radiografiaReciente={radiografiaReciente}
         versionEnVisualizacion={
           versionEnVisualizacion
             ? { fecha: versionEnVisualizacion.fecha, dientes: versionEnVisualizacion.dientes }
