@@ -72,13 +72,6 @@ export default async function OdontogramaPage({ params }: { params: { id: string
       ]
     : versionesAnteriores;
 
-  const ultimaRadiografia = await prisma.historialClinico.findFirst({
-    where: { pacienteId: paciente.id, eliminadoEn: null, archivosAdjuntos: { isEmpty: false } },
-    orderBy: { fecha: "desc" },
-    select: { archivosAdjuntos: true },
-  });
-  const radiografiaReciente = ultimaRadiografia?.archivosAdjuntos[0] ?? null;
-
   return (
     <div>
       <div className="mb-6">
@@ -111,7 +104,6 @@ export default async function OdontogramaPage({ params }: { params: { id: string
         soloLectura={!puedeEditar}
         versiones={versionesAnteriores}
         versionesDetalle={versionesParaDetalle}
-        radiografiaReciente={radiografiaReciente}
       />
     </div>
   );

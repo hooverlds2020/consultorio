@@ -10,7 +10,6 @@ export default function DetalleDienteModal({
   estadoActual,
   notaActual,
   versiones,
-  radiografiaReciente,
   soloLectura,
   onCerrar,
   onGuardarNota,
@@ -19,7 +18,6 @@ export default function DetalleDienteModal({
   estadoActual: EstadoDiente;
   notaActual: string;
   versiones: VersionHistorial[];
-  radiografiaReciente: string | null;
   soloLectura: boolean;
   onCerrar: () => void;
   onGuardarNota: (nota: string) => void;
@@ -55,17 +53,10 @@ export default function DetalleDienteModal({
           </button>
         </div>
 
-        {radiografiaReciente && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-1">Radiografía más reciente del paciente</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={radiografiaReciente}
-              alt="Radiografía reciente"
-              className="w-full max-h-40 object-cover rounded-lg border"
-            />
-          </div>
-        )}
+        {/* Sin radiografía aquí a propósito: mostrar "la más reciente del
+            paciente" sería engañoso, porque podría no ser de este diente.
+            Se retoma cuando exista forma de etiquetar cada radiografía por
+            pieza dental (ver nota en el historial del proyecto). */}
 
         <div className="mb-4">
           <label className="block text-sm text-gray-700 mb-1">

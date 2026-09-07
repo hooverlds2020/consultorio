@@ -28,7 +28,6 @@ type Props = {
   onVolverAEditar?: () => void;
   /** Para el panel de detalle por diente: historial de versiones y radiografía más reciente. */
   versiones?: VersionHistorial[];
-  radiografiaReciente?: string | null;
 };
 
 export default function OdontogramaEditor({
@@ -39,7 +38,6 @@ export default function OdontogramaEditor({
   versionEnVisualizacion = null,
   onVolverAEditar,
   versiones = [],
-  radiografiaReciente = null,
 }: Props) {
   const [dientes, setDientes] = useState<DientesJson>(dientesIniciales);
   const [motivo, setMotivo] = useState("");
@@ -206,7 +204,6 @@ export default function OdontogramaEditor({
           estadoActual={dientesMostrados[String(dienteEnDetalle)]?.estado ?? "SANO"}
           notaActual={dientesMostrados[String(dienteEnDetalle)]?.notas ?? ""}
           versiones={versiones}
-          radiografiaReciente={radiografiaReciente}
           soloLectura={modoSoloLectura}
           onCerrar={() => setDienteEnDetalle(null)}
           onGuardarNota={(nota) => handleGuardarNota(dienteEnDetalle, nota)}
