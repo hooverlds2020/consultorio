@@ -88,18 +88,21 @@ export default function OdontogramaEditor({
 
   function renderArcada(numeros: number[], arcada: "superior" | "inferior") {
     return (
-      <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3">
-        {numeros.map((n) => (
-          <ToothSVG
-            key={n}
-            numero={n}
-            estado={dientesMostrados[String(n)]?.estado ?? "SANO"}
-            tipo={tipoDiente(n, esInfantil)}
-            arcada={arcada}
-            onClick={() => handleClickDiente(n)}
-            soloLectura={modoSoloLectura}
-          />
-        ))}
+      <div className="w-full overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+        <div className="flex gap-4 min-w-max px-2 pb-2">
+          {numeros.map((n) => (
+            <div key={n} className="snap-start">
+              <ToothSVG
+                numero={n}
+                estado={dientesMostrados[String(n)]?.estado ?? "SANO"}
+                tipo={tipoDiente(n, esInfantil)}
+                arcada={arcada}
+                onClick={() => handleClickDiente(n)}
+                soloLectura={modoSoloLectura}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -123,14 +126,13 @@ export default function OdontogramaEditor({
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 space-y-4">
+      <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4">
         <div>
-          <p className="text-xs text-gray-400 mb-1">Arcada superior</p>
+          <p className="text-xs text-gray-400 mb-2">Arcada superior — desliza →</p>
           {renderArcada(arribaeDerecha.concat(arribaIzquierda), "superior")}
         </div>
-        <div className="border-t" />
         <div>
-          <p className="text-xs text-gray-400 mb-1">Arcada inferior</p>
+          <p className="text-xs text-gray-400 mt-6 mb-2">Arcada inferior — desliza →</p>
           {renderArcada(abajoDerecha.concat(abajoIzquierda), "inferior")}
         </div>
       </div>

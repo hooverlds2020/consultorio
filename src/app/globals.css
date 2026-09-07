@@ -5,3 +5,13 @@
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Usado por el odontograma para el scroll horizontal de las arcadas
+   sin mostrar la barra de scroll (deslice tipo carrusel). */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
