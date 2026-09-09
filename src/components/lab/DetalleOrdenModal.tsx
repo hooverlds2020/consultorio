@@ -228,7 +228,8 @@ export default function DetalleOrdenModal({
                 {errorAgendar && <p className="text-red-600 text-xs">{errorAgendar}</p>}
                 <p className="text-xs text-gray-500">
                   Se creará el {fechaEntregaEstimada || "(define la fecha promesa primero)"} con el
-                  título "Entrega Lab - {orden.paciente.nombre} {orden.paciente.apellidos}".
+                  título "Entrega Lab - {orden.paciente.nombre} {orden.paciente.apellidos} -{" "}
+                  {TIPO_TRABAJO_LABEL[orden.tipoTrabajo]}".
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
