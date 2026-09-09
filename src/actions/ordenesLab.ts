@@ -88,6 +88,10 @@ export async function actualizarOrdenLab(
     return { ok: false, mensaje: "No tienes permiso para editar esta orden." };
   }
 
+  if (!datos.fechaEntregaEstimada) {
+    return { ok: false, mensaje: "Define fecha promesa para control de retrasos" };
+  }
+
   await prisma.ordenLaboratorio.update({
     where: { id: ordenId },
     data: {

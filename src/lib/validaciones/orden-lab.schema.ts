@@ -11,7 +11,9 @@ export const ordenLabSchema = z.object({
   material: z.string().trim().max(100).optional().or(z.literal("")),
   diente: z.string().trim().max(10).optional().or(z.literal("")),
   notas: z.string().trim().max(500).optional().or(z.literal("")),
-  fechaEntregaEstimada: z.string().optional().or(z.literal("")),
+  fechaEntregaEstimada: z
+    .string()
+    .min(1, "Define fecha promesa para control de retrasos"),
   costoLaboratorio: z.coerce.number().min(0).optional().or(z.literal("")),
   anticipoLaboratorio: z.coerce.number().min(0).optional().or(z.literal("")),
 });

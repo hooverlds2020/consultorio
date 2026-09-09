@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { actualizarOrdenLab } from "@/actions/ordenesLab";
+import { crearCita } from "@/actions/agenda";
 import { TIPO_TRABAJO_LABEL, ESTATUS_LAB_LABEL } from "@/lib/validaciones/orden-lab.schema";
 import type { listarOrdenesLab, listarTecnicosLab } from "@/actions/ordenesLab";
 
@@ -11,6 +12,14 @@ type Tecnico = Awaited<ReturnType<typeof listarTecnicosLab>>[number];
 function fechaParaInput(fecha: Date | string | null): string {
   if (!fecha) return "";
   return new Date(fecha).toISOString().split("T")[0];
+}
+
+function sumarMinutos(hora: string, minutos: number): string {
+  const [h, m] = hora.split(":").map(Number);
+  const total = h * 60 + m + minutos;
+  const hf = Math.floor(total / 60) % 24;
+  const mf = total % 60;
+  return `${String(hf).padStart(2, "0")}:${String(mf).padStart(2, "0")}`;
 }
 
 export default function DetalleOrdenModal({
@@ -39,6 +48,13 @@ export default function DetalleOrdenModal({
   const [error, setError] = useState("");
   const [guardado, setGuardado] = useState(false);
 
+  const [mostrarAgendar, setMostrarAgendar] = useState(false);
+  const [horaEntrega, setHoraEntrega] = useState("10:00");
+  const [sillonEntrega, setSillonEntrega] = useState("1");
+  const [agendando, startTransitionAgendar] = useTransition();
+  const [citaCreada, setCitaCreada] = useState(false);
+  const [errorAgendar, setErrorAgendar] = useState("");
+
   const saldoLab = Number(costoLaboratorio || 0) - Number(anticipoLaboratorio || 0);
 
   function handleGuardar() {
@@ -57,6 +73,36 @@ export default function DetalleOrdenModal({
         setGuardado(true);
       } else {
         setError(resultado.mensaje ?? "No se pudo guardar.");
+      }
+    });
+  }
+
+  function handleAgendarEntrega() {
+    setErrorAgendar("");
+    if (!fechaEntregaEstimada) {
+      setErrorAgendar("Primero define y guarda la fecha promesa.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("pacienteId", orden.pacienteId);
+    formData.set("dentistaId", orden.dentistaId);
+    formData.set("sillon", sillonEntrega);
+    formData.set("fecha", fechaEntregaEstimada);
+    formData.set("horaInicio", horaEntrega);
+    formData.set("horaFin", sumarMinutos(horaEntrega, 30));
+    formData.set(
+      "tipoTratamiento",
+      `Entrega Lab - ${orden.paciente.nombre} ${orden.paciente.apellidos} - ${TIPO_TRABAJO_LABEL[orden.tipoTrabajo]}`
+    );
+    formData.set("notas", "Creada automáticamente desde Órdenes de Laboratorio.");
+
+    startTransitionAgendar(async () => {
+      const resultado = await crearCita({ ok: false }, formData);
+      if (resultado.ok) {
+        setCitaCreada(true);
+      } else {
+        setErrorAgendar(resultado.mensaje ?? "No se pudo crear la cita.");
       }
     });
   }
@@ -125,6 +171,7 @@ export default function DetalleOrdenModal({
             <input
               type="date"
               value={fechaEntregaEstimada}
+              required
               onChange={(e) => setFechaEntregaEstimada(e.target.value)}
               className="w-full h-11 border border-gray-300 rounded-lg px-3 text-[16px]"
             />
@@ -169,6 +216,58 @@ export default function DetalleOrdenModal({
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-[16px]"
             />
+          </div>
+
+          <div className="border-t pt-3">
+            {citaCreada ? (
+              <p className="text-sm text-green-600 bg-green-50 rounded-lg p-3">
+                ✓ Cita de entrega creada en la Agenda.
+              </p>
+            ) : mostrarAgendar ? (
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                {errorAgendar && <p className="text-red-600 text-xs">{errorAgendar}</p>}
+                <p className="text-xs text-gray-500">
+                  Se creará el {fechaEntregaEstimada || "(define la fecha promesa primero)"} con el
+                  título "Entrega Lab - {orden.paciente.nombre} {orden.paciente.apellidos}".
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Hora</label>
+                    <input
+                      type="time"
+                      value={horaEntrega}
+                      onChange={(e) => setHoraEntrega(e.target.value)}
+                      className="w-full h-10 border border-gray-300 rounded-lg px-2 text-[16px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Sillón</label>
+                    <select
+                      value={sillonEntrega}
+                      onChange={(e) => setSillonEntrega(e.target.value)}
+                      className="w-full h-10 border border-gray-300 rounded-lg px-2 text-[16px]"
+                    >
+                      <option value="1">Sillón 1</option>
+                      <option value="2">Sillón 2</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={handleAgendarEntrega}
+                  disabled={agendando}
+                  className="w-full h-10 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-60"
+                >
+                  {agendando ? "Agendando..." : "Confirmar cita de entrega"}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setMostrarAgendar(true)}
+                className="w-full h-11 border border-clinica-azul text-clinica-azul rounded-lg font-medium hover:bg-clinica-azulClaro transition"
+              >
+                Agendar entrega
+              </button>
+            )}
           </div>
 
           <button

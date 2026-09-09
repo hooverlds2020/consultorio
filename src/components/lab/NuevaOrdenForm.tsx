@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import type { EstadoOrdenLab } from "@/actions/ordenesLab";
 import { buscarPacientesParaOrden, crearOrdenLab } from "@/actions/ordenesLab";
@@ -31,18 +31,9 @@ export default function NuevaOrdenForm({ onCreada }: { onCreada: () => void }) {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
-    if (estado.ok) {
-      // No reseteamos de inmediato si hay fecha promesa: dejamos ver la
-      // sugerencia de ir a Agenda antes de limpiar el formulario.
-      if (!fechaPromesa) {
-        formRef.current?.reset();
-        setPacienteSeleccionado(null);
-        setQuery("");
-        onCreada();
-      }
-    }
-  }, [estado.ok, fechaPromesa, onCreada]);
+  // Con fecha promesa siempre obligatoria, un guardado exitoso siempre
+  // llega con fechaPromesa presente — la pantalla de éxito (más abajo)
+  // ofrece agendar la entrega en vez de resetear el formulario de inmediato.
 
   function handleBuscar(valor: string) {
     setQuery(valor);
@@ -201,13 +192,17 @@ export default function NuevaOrdenForm({ onCreada }: { onCreada: () => void }) {
         <input
           type="date"
           name="fechaEntregaEstimada"
+          required
           value={fechaPromesa}
           onChange={(e) => setFechaPromesa(e.target.value)}
           className="w-full h-11 border border-gray-300 rounded-lg px-3 text-[16px]"
         />
         <p className="text-xs text-gray-400 mt-1">
-          Sin esto no puedes saber si una orden va atrasada.
+          Obligatoria — sin esto no puedes saber si una orden va atrasada.
         </p>
+        {estado.errores?.fechaEntregaEstimada && (
+          <p className="text-red-500 text-xs mt-1">{estado.errores.fechaEntregaEstimada[0]}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
