@@ -1,18 +1,9 @@
 "use client";
 
-import { ESTATUS_CITA_LABEL, ESTATUS_CITA_COLOR } from "@/lib/validaciones/cita.schema";
-import { construirLinkWhatsapp, mensajeRecordatorioCita } from "@/lib/whatsapp";
+import { ESTATUS_CITA_COLOR } from "@/lib/validaciones/cita.schema";
 import type { EstatusCita } from "@prisma/client";
 
 const ALTURA_SLOT = 40; // px por bloque de 30 min
-
-const OPCIONES_ESTATUS: EstatusCita[] = [
-  "PROGRAMADA",
-  "CONFIRMADA",
-  "COMPLETADA",
-  "CANCELADA",
-  "NO_ASISTIO",
-];
 
 const PUNTO_COLUMNA = ["#3B82F6", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
 
@@ -40,19 +31,28 @@ function BloqueCita<T extends CitaBase>({
   cita,
   onCambiarEstatus,
   horaInicioDia,
+  onClick,
 }: {
   cita: T;
   onCambiarEstatus: (id: string, estatus: EstatusCita) => void;
   horaInicioDia: number;
+  onClick: () => void;
 }) {
   const inicio = new Date(cita.horaInicio);
   const fin = new Date(cita.horaFin);
   const top = Math.max(0, (minutosDesdeInicioDia(inicio, horaInicioDia) / 30) * ALTURA_SLOT);
-  const alto = Math.max(24, ((fin.getTime() - inicio.getTime()) / 60000 / 30) * ALTURA_SLOT - 2);
+  // Altura mínima garantizada (48px) para que siempre quepan las 3 líneas
+  // (hora, paciente, tratamiento) sin recortarse — una cita de 15-30 min
+  // puede así "asomarse" un poco sobre el siguiente bloque de la grilla,
+  // lo cual es preferible a ocultar de qué se trata la cita.
+  const altoPorDuracion = ((fin.getTime() - inicio.getTime()) / 60000 / 30) * ALTURA_SLOT - 2;
+  const alto = Math.max(48, altoPorDuracion);
 
   return (
-    <div
-      className="absolute left-1 right-1 rounded-lg bg-white border-l-4 shadow-sm px-2 py-1 overflow-hidden group hover:z-20 hover:shadow-md transition"
+    <button
+      type="button"
+      onClick={onClick}
+      className="absolute left-1 right-1 rounded-lg bg-white border-l-4 shadow-sm px-2 py-1 text-left hover:z-20 hover:shadow-md transition"
       style={{ top, height: alto, borderLeftColor: ESTATUS_CITA_COLOR[cita.estatus] }}
     >
       <div className="flex items-center gap-1.5">
@@ -68,52 +68,21 @@ function BloqueCita<T extends CitaBase>({
         {cita.paciente.nombre} {cita.paciente.apellidos}
       </p>
       <p className="text-[11px] text-gray-500 truncate">{cita.tipoTratamiento}</p>
-
-      {/* Detalle y acciones — visibles siempre en móvil (sin hover), y al hover en desktop */}
-      <div className="mt-1 flex flex-col gap-1">
-        <select
-          value={cita.estatus}
-          onChange={(e) => onCambiarEstatus(cita.id, e.target.value as EstatusCita)}
-          className="w-full text-[10px] h-6 border border-gray-200 rounded px-1"
-        >
-          {OPCIONES_ESTATUS.map((e) => (
-            <option key={e} value={e}>
-              {ESTATUS_CITA_LABEL[e]}
-            </option>
-          ))}
-        </select>
-        {cita.paciente.whatsapp && (
-          <a
-            href={construirLinkWhatsapp(
-              cita.paciente.whatsapp,
-              mensajeRecordatorioCita({
-                nombrePaciente: cita.paciente.nombre,
-                fecha: cita.fecha,
-                horaInicio: cita.horaInicio,
-                tipoTratamiento: cita.tipoTratamiento,
-              })
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] text-center bg-green-50 text-green-700 border border-green-200 rounded px-1 py-0.5"
-          >
-            WhatsApp
-          </a>
-        )}
-      </div>
-    </div>
+    </button>
   );
 }
 
 export default function AgendaTimeline<T extends CitaBase>({
   columnas,
   onCambiarEstatus,
+  onClickCita,
   horaInicioDia = 8,
   horaFinDia = 20,
   comida,
 }: {
   columnas: { clave: string; titulo: string; citas: T[] }[];
   onCambiarEstatus: (id: string, estatus: EstatusCita) => void;
+  onClickCita: (cita: T) => void;
   /** Recortan la grilla al horario real de la clínica ese día. */
   horaInicioDia?: number;
   horaFinDia?: number;
@@ -210,6 +179,7 @@ export default function AgendaTimeline<T extends CitaBase>({
                   cita={cita}
                   onCambiarEstatus={onCambiarEstatus}
                   horaInicioDia={horaInicioDia}
+                  onClick={() => onClickCita(cita)}
                 />
               ))}
             </div>

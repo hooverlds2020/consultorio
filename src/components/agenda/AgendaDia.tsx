@@ -7,6 +7,7 @@ import { hoyEnZonaClinica, sumarDiasEnZonaClinica } from "@/lib/fecha";
 import { diaSemanaDeFecha, horaTextoADecimal, NOMBRE_DIA, type HorariosSemana } from "@/lib/horarioServicio";
 import AgendaTimeline from "./AgendaTimeline";
 import NuevaCitaModal from "./NuevaCitaModal";
+import DetalleCitaModal from "./DetalleCitaModal";
 import type { EstatusCita } from "@prisma/client";
 
 type Cita = Awaited<ReturnType<typeof obtenerCitasDelDia>>[number];
@@ -30,6 +31,7 @@ export default function AgendaDia({
   const [citas, setCitas] = useState(citasIniciales);
   const [vista, setVista] = useState<"sillon" | "dentista">("sillon");
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [citaSeleccionada, setCitaSeleccionada] = useState<Cita | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -151,6 +153,7 @@ export default function AgendaDia({
           <AgendaTimeline
             columnas={columnas}
             onCambiarEstatus={handleCambiarEstatus}
+            onClickCita={(cita) => setCitaSeleccionada(cita)}
             horaInicioDia={horaTextoADecimal(horarioHoy.apertura)}
             horaFinDia={horaTextoADecimal(horarioHoy.cierre)}
             comida={
@@ -169,6 +172,14 @@ export default function AgendaDia({
           fechaInicial={fecha}
           onCerrar={() => setMostrarModal(false)}
           onCreada={handleCitaCreada}
+        />
+      )}
+
+      {citaSeleccionada && (
+        <DetalleCitaModal
+          cita={citaSeleccionada}
+          onCambiarEstatus={handleCambiarEstatus}
+          onCerrar={() => setCitaSeleccionada(null)}
         />
       )}
     </div>
