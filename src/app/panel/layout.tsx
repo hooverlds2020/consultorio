@@ -37,9 +37,7 @@ export default async function PanelLayout({
   if (puedeGestionarOrdenesLab(rol)) enlaces.push({ href: "/panel/lab/ordenes", label: "Laboratorio" });
   if (puedeVerInventario(rol)) enlaces.push({ href: "/panel/inventario", label: "Inventario" });
   if (puedeVerFinanzas(rol)) enlaces.push({ href: "/panel/caja", label: "Caja" });
-  if (esSuperAdmin(rol)) enlaces.push({ href: "/panel/usuarios", label: "Usuarios" });
-  if (esSuperAdmin(rol)) enlaces.push({ href: "/panel/catalogo", label: "Catálogo" });
-  if (esSuperAdmin(rol)) enlaces.push({ href: "/panel/config-landing", label: "Editar web" });
+  if (esSuperAdmin(rol)) enlaces.push({ href: "/panel/configuracion", label: "Configuración" });
 
   return (
     <div className="min-h-screen bg-gray-50">
