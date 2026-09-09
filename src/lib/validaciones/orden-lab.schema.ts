@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { EstatusOrdenLab } from "@prisma/client";
 
 export const ordenLabSchema = z.object({
   pacienteId: z.string().min(1, "Selecciona un paciente"),
@@ -10,6 +11,9 @@ export const ordenLabSchema = z.object({
   material: z.string().trim().max(100).optional().or(z.literal("")),
   diente: z.string().trim().max(10).optional().or(z.literal("")),
   notas: z.string().trim().max(500).optional().or(z.literal("")),
+  fechaEntregaEstimada: z.string().optional().or(z.literal("")),
+  costoLaboratorio: z.coerce.number().min(0).optional().or(z.literal("")),
+  anticipoLaboratorio: z.coerce.number().min(0).optional().or(z.literal("")),
 });
 
 export const TIPO_TRABAJO_LABEL: Record<string, string> = {
@@ -28,4 +32,4 @@ export const ESTATUS_LAB_LABEL: Record<string, string> = {
   ENTREGADO: "Entregado",
 };
 
-export const ORDEN_ESTATUS_LAB: string[] = ["RECIBIDO", "EN_PROCESO", "TERMINADO", "ENTREGADO"];
+export const ORDEN_ESTATUS_LAB: EstatusOrdenLab[] = ["RECIBIDO", "EN_PROCESO", "TERMINADO", "ENTREGADO"];

@@ -273,6 +273,9 @@ model OrdenLaboratorio {
   diente      String?
   notas       String?
 
+  costoLaboratorio    Decimal? @db.Decimal(10, 2) // lo que cobra el laboratorio externo
+  anticipoLaboratorio Decimal? @db.Decimal(10, 2) // lo que ya se le pagó a ese laboratorio
+
   estatus              EstatusOrdenLab @default(RECIBIDO)
   fechaSolicitud       DateTime        @default(now())
   fechaEntregaEstimada DateTime?

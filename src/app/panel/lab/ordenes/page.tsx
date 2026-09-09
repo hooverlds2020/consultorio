@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { puedeGestionarOrdenesLab, puedeEditarClinico } from "@/lib/permisos";
-import { listarOrdenesLab, listarTecnicosLab } from "@/actions/ordenesLab";
+import { listarOrdenesLab, listarTecnicosLab, obtenerResumenDeudaLaboratorio } from "@/actions/ordenesLab";
 import TableroOrdenesLab from "@/components/lab/TableroOrdenesLab";
 
 export default async function OrdenesLabPage() {
@@ -12,7 +12,11 @@ export default async function OrdenesLabPage() {
     redirect("/panel");
   }
 
-  const [ordenes, tecnicos] = await Promise.all([listarOrdenesLab(), listarTecnicosLab()]);
+  const [ordenes, tecnicos, resumenDeuda] = await Promise.all([
+    listarOrdenesLab(),
+    listarTecnicosLab(),
+    obtenerResumenDeudaLaboratorio(),
+  ]);
 
   return (
     <div>
@@ -23,6 +27,7 @@ export default async function OrdenesLabPage() {
         ordenes={ordenes}
         tecnicos={tecnicos}
         puedeCrear={puedeEditarClinico(session.user.rol)}
+        resumenDeuda={resumenDeuda}
       />
     </div>
   );
