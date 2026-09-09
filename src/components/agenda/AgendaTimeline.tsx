@@ -119,27 +119,31 @@ export default function AgendaTimeline<T extends CitaBase>({
     (_, i) => HORA_INICIO_DIA + i
   );
 
+  // 1-3 sillones: se reparten el 100% del ancho, sin scroll.
+  // 4+ sillones: cada uno respeta un mínimo de 280px y aparece el scroll
+  // horizontal con "snap" — así con 10 sillones se ven 3-4 a la vez y
+  // se desliza para ver el resto, en vez de aplastarlos hasta ser ilegibles.
+  // (280px cabe cómodo incluso en el ancho mínimo de referencia del sistema,
+  // 360px, mostrando la columna actual más un adelanto de la siguiente —
+  // por eso no hace falta un valor aparte para móvil.)
+  const gridTemplateColumns =
+    columnas.length <= 3
+      ? `56px repeat(${columnas.length}, 1fr)`
+      : `56px repeat(${columnas.length}, minmax(280px, 1fr))`;
+
   return (
     <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <div className="flex overflow-x-auto">
-        {/* Columna de horas — fija a la izquierda */}
-        <div className="shrink-0 w-14 border-r bg-gray-50">
-          <div className="h-10 border-b" /> {/* espacio del encabezado de columnas */}
-          {horas.map((h) => (
-            <div
-              key={h}
-              className="text-[11px] text-gray-400 text-right pr-2 -mt-2"
-              style={{ height: ALTURA_SLOT * 2 }}
-            >
-              {String(h).padStart(2, "0")}:00
-            </div>
-          ))}
-        </div>
+      <div className="w-full overflow-x-auto snap-x snap-mandatory">
+        <div className="grid" style={{ gridTemplateColumns }}>
+          {/* Esquina superior izquierda, encima de la columna de horas */}
+          <div className="sticky left-0 top-0 z-20 bg-gray-50 h-10 border-b border-r" />
 
-        {/* Columnas de citas */}
-        {columnas.map((col, i) => (
-          <div key={col.clave} className="shrink-0 w-[220px] border-r last:border-r-0">
-            <div className="h-10 border-b flex items-center gap-2 px-3 sticky top-0 bg-white z-10">
+          {/* Encabezados de cada sillón/dentista */}
+          {columnas.map((col, i) => (
+            <div
+              key={`${col.clave}-header`}
+              className="sticky top-0 z-10 bg-white h-10 border-b flex items-center gap-2 px-3 snap-start"
+            >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: PUNTO_COLUMNA[i % PUNTO_COLUMNA.length] }}
@@ -147,8 +151,29 @@ export default function AgendaTimeline<T extends CitaBase>({
               <span className="text-sm font-semibold text-gray-700 truncate">{col.titulo}</span>
               <span className="text-[10px] text-gray-400 ml-auto shrink-0">{col.citas.length}</span>
             </div>
+          ))}
+
+          {/* Columna de horas — fija a la izquierda al deslizar */}
+          <div
+            className="sticky left-0 z-20 bg-gray-50 border-r"
+            style={{ height: ALTURA_TOTAL }}
+          >
+            {horas.map((h) => (
+              <div
+                key={h}
+                className="text-[11px] text-gray-400 text-right pr-2 -mt-2"
+                style={{ height: ALTURA_SLOT * 2 }}
+              >
+                {String(h).padStart(2, "0")}:00
+              </div>
+            ))}
+          </div>
+
+          {/* Cuerpo de cada columna, con las citas posicionadas por hora */}
+          {columnas.map((col) => (
             <div
-              className="relative"
+              key={`${col.clave}-body`}
+              className="relative border-r last:border-r-0 snap-start"
               style={{
                 height: ALTURA_TOTAL,
                 backgroundImage:
@@ -161,8 +186,8 @@ export default function AgendaTimeline<T extends CitaBase>({
                 <BloqueCita key={cita.id} cita={cita} onCambiarEstatus={onCambiarEstatus} />
               ))}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
