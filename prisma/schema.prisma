@@ -366,8 +366,14 @@ model Consentimiento {
 
   tipoTratamiento     String
   textoConsentimiento String
-  firmaImagenPath     String
-  fechaFirma          DateTime @default(now())
+  firmaImagenPath     String?   // nulo mientras está pendiente de firma remota
+  fechaFirma          DateTime? // se llena al momento de la firma, no al crear
+
+  // --- Firma remota por WhatsApp ---
+  token         String?   @unique // token de un solo uso para el enlace público de firma
+  tokenExpiraEn DateTime? // el enlace deja de funcionar después de esta fecha
+  ipFirma       String?   // IP desde donde se firmó, para trazabilidad
+  hashDocumento String?   // huella del documento firmado, para detectar alteraciones
 
   eliminadoEn DateTime?
   createdAt   DateTime  @default(now())

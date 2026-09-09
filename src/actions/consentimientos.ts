@@ -53,6 +53,7 @@ export async function crearConsentimiento(
       tipoTratamiento,
       textoConsentimiento,
       firmaImagenPath: `/uploads/firmas-consentimiento/${nombreArchivo}`,
+      fechaFirma: new Date(),
     },
   });
 
@@ -63,7 +64,7 @@ export async function crearConsentimiento(
 export async function listarConsentimientosPaciente(pacienteId: string) {
   return prisma.consentimiento.findMany({
     where: { pacienteId, eliminadoEn: null },
-    orderBy: { fechaFirma: "desc" },
+    orderBy: { createdAt: "desc" },
     include: { dentista: { select: { nombre: true } } },
   });
 }
