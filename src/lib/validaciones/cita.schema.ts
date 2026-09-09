@@ -22,9 +22,9 @@ export const ESTATUS_CITA_LABEL: Record<string, string> = {
 };
 
 export const ESTATUS_CITA_COLOR: Record<string, string> = {
-  PROGRAMADA: "#93C5FD", // azul claro
-  CONFIRMADA: "#4ADE80", // verde
-  CANCELADA: "#F87171", // rojo
-  NO_ASISTIO: "#D1D5DB", // gris
-  COMPLETADA: "#A78BFA", // morado
+  PROGRAMADA: "#F59E0B", // amarillo/ámbar — agendada
+  CONFIRMADA: "#22C55E", // verde — confirmada
+  CANCELADA: "#78716C", // gris piedra — cancelada
+  NO_ASISTIO: "#EF4444", // rojo — no se presentó
+  COMPLETADA: "#9CA3AF", // gris — terminada
 };
