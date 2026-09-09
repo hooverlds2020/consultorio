@@ -71,13 +71,15 @@ export async function obtenerTimelinePaciente(pacienteId: string): Promise<Event
       detalle: `${METODO_PAGO_LABEL[p.metodo]} · Folio ${p.folioRecibo}`,
       href: `/panel/pacientes/${pacienteId}/pagos`,
     })),
-    ...consentimientos.map((c) => ({
-      fecha: c.fechaFirma,
-      tipo: "consentimiento" as const,
-      titulo: `Consentimiento firmado — ${c.tipoTratamiento}`,
-      detalle: "Firma digital registrada",
-      href: `/panel/pacientes/${pacienteId}/consentimientos`,
-    })),
+    ...consentimientos
+      .filter((c) => c.fechaFirma !== null)
+      .map((c) => ({
+        fecha: c.fechaFirma as Date,
+        tipo: "consentimiento" as const,
+        titulo: `Consentimiento firmado — ${c.tipoTratamiento}`,
+        detalle: "Firma digital registrada",
+        href: `/panel/pacientes/${pacienteId}/consentimientos`,
+      })),
     ...historial.map((h) => ({
       fecha: h.fecha,
       tipo: "historial" as const,
