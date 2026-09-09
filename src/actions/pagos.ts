@@ -73,6 +73,7 @@ export async function listarPagosPaciente(pacienteId: string) {
     include: {
       paciente: { select: { nombre: true, apellidos: true } },
       registradoPor: { select: { nombre: true } },
+      planTratamiento: { select: { totalPlan: true, totalPagado: true, estatus: true } },
     },
   });
 }

@@ -5,7 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { puedeGestionarPacientes, esSuperAdmin } from "@/lib/permisos";
 import { prisma } from "@/lib/prisma";
 import { actualizarPaciente } from "@/actions/pacientes";
+import { obtenerTimelinePaciente } from "@/actions/timeline";
 import PacienteForm from "@/components/pacientes/PacienteForm";
+import BannerAlertasClinicas from "@/components/pacientes/BannerAlertasClinicas";
+import TimelinePaciente from "@/components/pacientes/TimelinePaciente";
 import { calcularEdad } from "@/lib/validaciones/paciente.schema";
 import EliminarPacienteBoton from "@/components/pacientes/EliminarPacienteBoton";
 
@@ -23,6 +26,7 @@ export default async function FichaPacientePage({ params }: { params: { id: stri
   }
 
   const actualizarConId = actualizarPaciente.bind(null, paciente.id);
+  const eventosTimeline = await obtenerTimelinePaciente(paciente.id);
 
   const pestanas = [
     { href: `/panel/pacientes/${paciente.id}/historial`, label: "Historial clínico" },
@@ -48,6 +52,12 @@ export default async function FichaPacientePage({ params }: { params: { id: stri
         )}
       </div>
 
+      <BannerAlertasClinicas
+        alergias={paciente.alergias}
+        enfermedadesSistemicas={paciente.enfermedadesSistemicas}
+        medicamentosActuales={paciente.medicamentosActuales}
+      />
+
       {/* Pestañas — scrolleables horizontalmente en móvil, nunca se cortan */}
       <div className="w-full overflow-x-auto -mx-4 px-4 mb-6">
         <div className="flex gap-2 min-w-max py-1">
@@ -63,11 +73,18 @@ export default async function FichaPacientePage({ params }: { params: { id: stri
         </div>
       </div>
 
-      <PacienteForm
-        accion={actualizarConId}
-        paciente={paciente}
-        redirigirA={`/panel/pacientes/${paciente.id}`}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <PacienteForm
+            accion={actualizarConId}
+            paciente={paciente}
+            redirigirA={`/panel/pacientes/${paciente.id}`}
+          />
+        </div>
+        <div>
+          <TimelinePaciente eventos={eventosTimeline} />
+        </div>
+      </div>
     </div>
   );
 }

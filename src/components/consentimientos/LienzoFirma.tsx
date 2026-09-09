@@ -76,12 +76,16 @@ export default function LienzoFirma({ onCambio }: { onCambio: (dataUrl: string |
         onPointerMove={continuarTrazo}
         onPointerUp={terminarTrazo}
         onPointerLeave={terminarTrazo}
-        className="w-full max-w-full border border-gray-300 rounded-md bg-white touch-none cursor-crosshair"
+        className="w-full max-w-full h-[160px] md:h-[180px] border-2 border-gray-300 rounded-lg bg-white touch-none cursor-crosshair"
       />
-      <div className="flex items-center justify-between mt-1">
+      <div className="flex items-center justify-between mt-2">
         <p className="text-xs text-gray-400">Firma aquí con el dedo o el mouse</p>
-        <button type="button" onClick={limpiar} className="text-xs text-red-500 hover:underline h-8 px-2">
-          Limpiar
+        <button
+          type="button"
+          onClick={limpiar}
+          className="h-10 px-4 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
+        >
+          Limpiar firma
         </button>
       </div>
     </div>
