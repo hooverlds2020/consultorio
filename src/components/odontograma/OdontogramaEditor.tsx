@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   COLOR_ESTADO,
   NOMBRE_ESTADO,
@@ -13,7 +14,7 @@ import {
   type DientesJson,
 } from "@/lib/odontograma";
 import { guardarOdontograma } from "@/actions/odontograma";
-import { calcularDiff } from "./historialUtils";
+import { calcularDiff, type CambioDiente } from "./historialUtils";
 import ToothSVG from "./ToothSVG";
 import DetalleDienteModal from "./DetalleDienteModal";
 import type { VersionHistorial } from "./OdontogramaConHistorial";
@@ -46,6 +47,7 @@ export default function OdontogramaEditor({
   const [error, setError] = useState("");
   const [dienteEnDetalle, setDienteEnDetalle] = useState<number | null>(null);
   const [notasModificadas, setNotasModificadas] = useState(false);
+  const [ultimoDiffGuardado, setUltimoDiffGuardado] = useState<CambioDiente[]>([]);
   const baselineRef = useRef<DientesJson>(dientesIniciales);
   const router = useRouter();
 
@@ -86,6 +88,7 @@ export default function OdontogramaEditor({
         setGuardado(true);
         setMotivo("");
         setNotasModificadas(false);
+        setUltimoDiffGuardado(diff);
         baselineRef.current = dientes;
         router.refresh();
       } else {
@@ -193,7 +196,21 @@ export default function OdontogramaEditor({
             >
               {isPending ? "Guardando..." : "Guardar nueva versión"}
             </button>
-            {guardado && <span className="text-green-600 text-sm">Guardado ✓</span>}
+            {guardado && (
+              <div className="flex items-center gap-3">
+                <span className="text-green-600 text-sm">Guardado ✓</span>
+                {ultimoDiffGuardado.length > 0 && (
+                  <Link
+                    href={`/panel/pacientes/${pacienteId}/cotizaciones?sugerido=${encodeURIComponent(
+                      JSON.stringify(ultimoDiffGuardado)
+                    )}`}
+                    className="text-sm text-clinica-azul hover:underline"
+                  >
+                    Generar cotización con estos cambios →
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

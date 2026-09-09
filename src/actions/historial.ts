@@ -45,10 +45,21 @@ export async function crearEntradaHistorial(
     return { ok: false, mensaje: "No tienes permiso para agregar historial clínico." };
   }
 
-  const notas = (formData.get("notas") ?? "").toString().trim();
-  if (!notas) {
-    return { ok: false, mensaje: "Las notas son obligatorias." };
+  const soapS = (formData.get("soapS") ?? "").toString().trim();
+  const soapO = (formData.get("soapO") ?? "").toString().trim();
+  const soapA = (formData.get("soapA") ?? "").toString().trim();
+  const soapP = (formData.get("soapP") ?? "").toString().trim();
+
+  if (!soapS && !soapO && !soapA && !soapP) {
+    return { ok: false, mensaje: "Llena al menos uno de los campos (S, O, A o P)." };
   }
+
+  const partes: string[] = [];
+  if (soapS) partes.push(`S — Subjetivo: ${soapS}`);
+  if (soapO) partes.push(`O — Objetivo: ${soapO}`);
+  if (soapA) partes.push(`A — Análisis: ${soapA}`);
+  if (soapP) partes.push(`P — Plan: ${soapP}`);
+  const notas = partes.join("\n\n");
 
   const paciente = await prisma.paciente.findUnique({ where: { id: pacienteId } });
   if (!paciente || paciente.eliminadoEn) {

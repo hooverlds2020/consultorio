@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { puedeGestionarCotizaciones } from "@/lib/permisos";
 import { prisma } from "@/lib/prisma";
 import { listarServiciosActivos } from "@/actions/catalogo";
+import { NOMBRE_ESTADO, type EstadoDiente } from "@/lib/odontograma";
 import CotizacionForm from "@/components/cotizaciones/CotizacionForm";
 
 const ESTATUS_LABEL: Record<string, string> = {
@@ -19,7 +20,13 @@ const ESTATUS_COLOR: Record<string, string> = {
   RECHAZADA: "bg-red-100 text-red-700",
 };
 
-export default async function CotizacionesPage({ params }: { params: { id: string } }) {
+export default async function CotizacionesPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { sugerido?: string };
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session || !puedeGestionarCotizaciones(session.user.rol)) {
@@ -38,6 +45,36 @@ export default async function CotizacionesPage({ params }: { params: { id: strin
     }),
     listarServiciosActivos(),
   ]);
+
+  // Si venimos del odontograma con cambios recién guardados, sugerimos
+  // líneas de cotización buscando un servicio del catálogo cuyo nombre
+  // coincida con el nuevo estado del diente (ej. diente pasó a "Corona"
+  // → busca un servicio que contenga "corona" en el nombre). Si no hay
+  // coincidencia, simplemente no se sugiere esa línea — no se inventa nada.
+  let lineasSugeridas: { servicioId: string; cantidad: number }[] = [];
+  let huboSugerenciasSinMatch = false;
+
+  if (searchParams.sugerido) {
+    try {
+      const diff = JSON.parse(decodeURIComponent(searchParams.sugerido)) as {
+        diente: string;
+        a: EstadoDiente;
+      }[];
+
+      for (const cambio of diff) {
+        const nombreEstado = NOMBRE_ESTADO[cambio.a]?.toLowerCase();
+        if (!nombreEstado || nombreEstado === "sano") continue;
+        const match = servicios.find((s) => s.nombre.toLowerCase().includes(nombreEstado));
+        if (match) {
+          lineasSugeridas.push({ servicioId: match.id, cantidad: 1 });
+        } else {
+          huboSugerenciasSinMatch = true;
+        }
+      }
+    } catch {
+      // Parámetro corrupto o manipulado — simplemente lo ignoramos, no rompe la página.
+    }
+  }
 
   return (
     <div>
@@ -82,7 +119,23 @@ export default async function CotizacionesPage({ params }: { params: { id: strin
 
         <div>
           <h2 className="font-medium text-gray-700 mb-3">Nueva cotización</h2>
-          <CotizacionForm pacienteId={paciente.id} servicios={servicios as any} />
+          {lineasSugeridas.length > 0 && (
+            <p className="text-xs bg-blue-50 text-blue-700 rounded-md p-2 mb-2">
+              Se prellenaron {lineasSugeridas.length} línea(s) a partir de los cambios del
+              odontograma. Revísalas antes de guardar.
+            </p>
+          )}
+          {huboSugerenciasSinMatch && (
+            <p className="text-xs bg-yellow-50 text-yellow-700 rounded-md p-2 mb-2">
+              Algún cambio del odontograma no tiene un servicio equivalente en el catálogo —
+              agrégalo manualmente si aplica.
+            </p>
+          )}
+          <CotizacionForm
+            pacienteId={paciente.id}
+            servicios={servicios as any}
+            lineasIniciales={lineasSugeridas}
+          />
         </div>
       </div>
     </div>

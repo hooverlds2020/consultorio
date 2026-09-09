@@ -11,11 +11,13 @@ type Linea = { servicioId: string; cantidad: number };
 export default function CotizacionForm({
   pacienteId,
   servicios,
+  lineasIniciales = [],
 }: {
   pacienteId: string;
   servicios: Servicio[];
+  lineasIniciales?: Linea[];
 }) {
-  const [lineas, setLineas] = useState<Linea[]>([]);
+  const [lineas, setLineas] = useState<Linea[]>(lineasIniciales);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const router = useRouter();
