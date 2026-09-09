@@ -4,11 +4,7 @@ import { ESTATUS_CITA_LABEL, ESTATUS_CITA_COLOR } from "@/lib/validaciones/cita.
 import { construirLinkWhatsapp, mensajeRecordatorioCita } from "@/lib/whatsapp";
 import type { EstatusCita } from "@prisma/client";
 
-const HORA_INICIO_DIA = 8;
-const HORA_FIN_DIA = 20;
 const ALTURA_SLOT = 40; // px por bloque de 30 min
-const TOTAL_SLOTS = (HORA_FIN_DIA - HORA_INICIO_DIA) * 2;
-const ALTURA_TOTAL = TOTAL_SLOTS * ALTURA_SLOT;
 
 const OPCIONES_ESTATUS: EstatusCita[] = [
   "PROGRAMADA",
@@ -20,8 +16,8 @@ const OPCIONES_ESTATUS: EstatusCita[] = [
 
 const PUNTO_COLUMNA = ["#3B82F6", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
 
-function minutosDesdeInicioDia(fecha: Date): number {
-  return (fecha.getHours() - HORA_INICIO_DIA) * 60 + fecha.getMinutes();
+function minutosDesdeInicioDia(fecha: Date, horaInicioDia: number): number {
+  return (fecha.getHours() - horaInicioDia) * 60 + fecha.getMinutes();
 }
 
 function formatoHora(fecha: Date): string {
@@ -43,13 +39,15 @@ type CitaBase = {
 function BloqueCita<T extends CitaBase>({
   cita,
   onCambiarEstatus,
+  horaInicioDia,
 }: {
   cita: T;
   onCambiarEstatus: (id: string, estatus: EstatusCita) => void;
+  horaInicioDia: number;
 }) {
   const inicio = new Date(cita.horaInicio);
   const fin = new Date(cita.horaFin);
-  const top = Math.max(0, (minutosDesdeInicioDia(inicio) / 30) * ALTURA_SLOT);
+  const top = Math.max(0, (minutosDesdeInicioDia(inicio, horaInicioDia) / 30) * ALTURA_SLOT);
   const alto = Math.max(24, ((fin.getTime() - inicio.getTime()) / 60000 / 30) * ALTURA_SLOT - 2);
 
   return (
@@ -110,14 +108,30 @@ function BloqueCita<T extends CitaBase>({
 export default function AgendaTimeline<T extends CitaBase>({
   columnas,
   onCambiarEstatus,
+  horaInicioDia = 8,
+  horaFinDia = 20,
+  comida,
 }: {
   columnas: { clave: string; titulo: string; citas: T[] }[];
   onCambiarEstatus: (id: string, estatus: EstatusCita) => void;
+  /** Recortan la grilla al horario real de la clínica ese día. */
+  horaInicioDia?: number;
+  horaFinDia?: number;
+  /** Franja de comida, en formato "HH:MM", si aplica ese día. */
+  comida?: { inicio: string; fin: string } | null;
 }) {
-  const horas = Array.from(
-    { length: HORA_FIN_DIA - HORA_INICIO_DIA },
-    (_, i) => HORA_INICIO_DIA + i
-  );
+  const totalSlots = Math.round((horaFinDia - horaInicioDia) * 2);
+  const alturaTotal = totalSlots * ALTURA_SLOT;
+  const horas = Array.from({ length: Math.ceil(horaFinDia - horaInicioDia) }, (_, i) => horaInicioDia + i);
+
+  let bandaComida: { top: number; alto: number } | null = null;
+  if (comida) {
+    const [hi, mi] = comida.inicio.split(":").map(Number);
+    const [hf, mf] = comida.fin.split(":").map(Number);
+    const inicioMin = (hi - horaInicioDia) * 60 + mi;
+    const finMin = (hf - horaInicioDia) * 60 + mf;
+    bandaComida = { top: (inicioMin / 30) * ALTURA_SLOT, alto: ((finMin - inicioMin) / 30) * ALTURA_SLOT };
+  }
 
   // 1-3 sillones: se reparten el 100% del ancho, sin scroll.
   // 4+ sillones: cada uno respeta un mínimo de 280px y aparece el scroll
@@ -156,7 +170,7 @@ export default function AgendaTimeline<T extends CitaBase>({
           {/* Columna de horas — fija a la izquierda al deslizar */}
           <div
             className="sticky left-0 z-20 bg-gray-50 border-r"
-            style={{ height: ALTURA_TOTAL }}
+            style={{ height: alturaTotal }}
           >
             {horas.map((h) => (
               <div
@@ -175,15 +189,28 @@ export default function AgendaTimeline<T extends CitaBase>({
               key={`${col.clave}-body`}
               className="relative border-r last:border-r-0 snap-start"
               style={{
-                height: ALTURA_TOTAL,
+                height: alturaTotal,
                 backgroundImage:
                   "repeating-linear-gradient(to bottom, #f3f4f6 0, #f3f4f6 1px, transparent 1px, transparent " +
                   ALTURA_SLOT +
                   "px)",
               }}
             >
+              {bandaComida && (
+                <div
+                  className="absolute left-0 right-0 bg-gray-100/80 border-y border-dashed border-gray-300 pointer-events-none flex items-center justify-center"
+                  style={{ top: bandaComida.top, height: bandaComida.alto }}
+                >
+                  <span className="text-[10px] text-gray-400 font-medium">Comida</span>
+                </div>
+              )}
               {col.citas.map((cita) => (
-                <BloqueCita key={cita.id} cita={cita} onCambiarEstatus={onCambiarEstatus} />
+                <BloqueCita
+                  key={cita.id}
+                  cita={cita}
+                  onCambiarEstatus={onCambiarEstatus}
+                  horaInicioDia={horaInicioDia}
+                />
               ))}
             </div>
           ))}

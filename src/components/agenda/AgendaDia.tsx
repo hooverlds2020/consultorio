@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { obtenerCitasDelDia, cambiarEstatusCita } from "@/actions/agenda";
 import { hoyEnZonaClinica, sumarDiasEnZonaClinica } from "@/lib/fecha";
+import { diaSemanaDeFecha, horaTextoADecimal, NOMBRE_DIA, type HorariosSemana } from "@/lib/horarioServicio";
 import AgendaTimeline from "./AgendaTimeline";
 import NuevaCitaModal from "./NuevaCitaModal";
 import type { EstatusCita } from "@prisma/client";
@@ -16,11 +17,13 @@ export default function AgendaDia({
   citasIniciales,
   dentistas,
   servicios,
+  horarios,
   fechaInicial,
 }: {
   citasIniciales: Cita[];
   dentistas: Dentista[];
   servicios: Servicio[];
+  horarios: HorariosSemana;
   fechaInicial: string;
 }) {
   const [fecha, setFecha] = useState(fechaInicial);
@@ -66,6 +69,10 @@ export default function AgendaDia({
           titulo: d.nombre,
           citas: citas.filter((c) => c.dentista.id === d.id),
         }));
+
+  const diaActual = diaSemanaDeFecha(fecha);
+  const horarioHoy = horarios[diaActual];
+  const cerrado = !horarioHoy.activo;
 
   return (
     <div className="w-full max-w-[1200px] mx-auto">
@@ -125,15 +132,35 @@ export default function AgendaDia({
         </div>
         <button
           onClick={() => setMostrarModal(true)}
-          className="w-full h-12 bg-clinica-azul text-white rounded-xl font-medium text-[16px] hover:bg-clinica-azulOscuro transition"
+          disabled={cerrado}
+          className="w-full h-12 bg-clinica-azul text-white rounded-xl font-medium text-[16px] hover:bg-clinica-azulOscuro transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           + Nueva cita
         </button>
       </div>
 
-      <div className={isPending ? "opacity-50" : ""}>
-        <AgendaTimeline columnas={columnas} onCambiarEstatus={handleCambiarEstatus} />
-      </div>
+      {cerrado ? (
+        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl py-12 text-center">
+          <p className="text-gray-500 font-medium">Clínica cerrada — {NOMBRE_DIA[diaActual]}</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Cambia el horario en Configuración → Horario de atención si esto no es correcto.
+          </p>
+        </div>
+      ) : (
+        <div className={isPending ? "opacity-50" : ""}>
+          <AgendaTimeline
+            columnas={columnas}
+            onCambiarEstatus={handleCambiarEstatus}
+            horaInicioDia={horaTextoADecimal(horarioHoy.apertura)}
+            horaFinDia={horaTextoADecimal(horarioHoy.cierre)}
+            comida={
+              horarioHoy.comidaInicio && horarioHoy.comidaFin
+                ? { inicio: horarioHoy.comidaInicio, fin: horarioHoy.comidaFin }
+                : null
+            }
+          />
+        </div>
+      )}
 
       {mostrarModal && (
         <NuevaCitaModal

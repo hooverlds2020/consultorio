@@ -402,6 +402,18 @@ model ConfigLanding {
   @@map("config_landing")
 }
 
+// Horario de atención de la clínica — una sola fila (singleton).
+// horariosJson guarda algo como:
+// { "lunes": {"activo": true, "apertura": "09:00", "cierre": "18:00",
+//              "comidaInicio": "14:00", "comidaFin": "15:00"}, ... }
+model HorarioServicio {
+  id          String   @id @default(cuid())
+  horariosJson Json
+  updatedAt   DateTime @updatedAt
+
+  @@map("horario_servicio")
+}
+
 enum TipoGaleria {
   ANTES_DESPUES
   GENERAL

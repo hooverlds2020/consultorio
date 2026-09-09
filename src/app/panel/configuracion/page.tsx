@@ -1,13 +1,14 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, ListChecks, Globe } from "lucide-react";
+import { Users, ListChecks, Globe, Clock } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { esSuperAdmin } from "@/lib/permisos";
 
 const SECCIONES = [
   { href: "/panel/usuarios", titulo: "Usuarios", descripcion: "Alta de dentistas, recepcionistas y técnico de laboratorio", icono: Users },
   { href: "/panel/catalogo", titulo: "Catálogo de servicios", descripcion: "Servicios y precios usados en las cotizaciones", icono: ListChecks },
+  { href: "/panel/configuracion/horarios", titulo: "Horario de atención", descripcion: "Días y horas en que la clínica recibe pacientes", icono: Clock },
   { href: "/panel/config-landing", titulo: "Editar página web", descripcion: "Contenido de la landing pública (inicio, testimonios, galería, contacto)", icono: Globe },
 ];
 

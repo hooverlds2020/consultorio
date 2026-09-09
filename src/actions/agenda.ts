@@ -6,6 +6,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { puedeGestionarAgenda } from "@/lib/permisos";
 import { citaSchema } from "@/lib/validaciones/cita.schema";
+import { diaSemanaDeFecha, horaTextoADecimal } from "@/lib/horarioServicio";
+import { obtenerHorarioServicio } from "@/actions/horarioServicio";
 import type { EstatusCita } from "@prisma/client";
 
 export type EstadoCita = { ok: boolean; errores?: Record<string, string[]>; mensaje?: string };
@@ -42,6 +44,28 @@ export async function crearCita(
 
   if (horaFin <= horaInicio) {
     return { ok: false, mensaje: "La hora de fin debe ser después de la hora de inicio." };
+  }
+
+  // No permitir agendar en días cerrados o fuera del horario de atención
+  // configurado en Configuración → Horario de atención.
+  const horarios = await obtenerHorarioServicio();
+  const diaSemana = diaSemanaDeFecha(datos.fecha);
+  const horarioDia = horarios[diaSemana];
+
+  if (!horarioDia.activo) {
+    return { ok: false, mensaje: `La clínica no atiende ese día (${diaSemana}).` };
+  }
+
+  const horaInicioSolicitada = horaTextoADecimal(datos.horaInicio);
+  const horaFinSolicitada = horaTextoADecimal(datos.horaFin);
+  const aperturaDecimal = horaTextoADecimal(horarioDia.apertura);
+  const cierreDecimal = horaTextoADecimal(horarioDia.cierre);
+
+  if (horaInicioSolicitada < aperturaDecimal || horaFinSolicitada > cierreDecimal) {
+    return {
+      ok: false,
+      mensaje: `Ese horario está fuera del horario de atención (${horarioDia.apertura} - ${horarioDia.cierre}).`,
+    };
   }
 
   const fechaInicioDia = new Date(`${datos.fecha}T00:00:00`);
