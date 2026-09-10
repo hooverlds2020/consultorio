@@ -15,6 +15,7 @@ export default function DienteV2({
   numero,
   coloresPorCara,
   esAusencia,
+  tieneRx,
   onClickCara,
 }: {
   numero: number;
@@ -22,6 +23,8 @@ export default function DienteV2({
   coloresPorCara: Partial<Record<Cara, string>>;
   /** Cuando el hallazgo más reciente de "Todas" es Ausencia: gris + X. */
   esAusencia?: boolean;
+  /** Muestra un ícono de cámara si hay una radiografía ligada a este diente. */
+  tieneRx?: boolean;
   onClickCara: (numero: number, cara: Cara) => void;
 }) {
   function Zona({ cara, puntos }: { cara: Cara; puntos: string }) {
@@ -41,7 +44,12 @@ export default function DienteV2({
   }
 
   return (
-    <div className="flex flex-col items-center gap-1 shrink-0">
+    <div className="flex flex-col items-center gap-1 shrink-0 relative">
+      {tieneRx && (
+        <span className="absolute -top-1 -right-1 text-[10px] z-10" title="Tiene radiografía">
+          📷
+        </span>
+      )}
       <svg width={50} height={50} viewBox="0 0 50 50">
         <Zona cara="Vestibular" puntos="0,0 50,0 35,15 15,15" />
         <Zona cara="Distal" puntos="50,0 50,50 35,35 35,15" />

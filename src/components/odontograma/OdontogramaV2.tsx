@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Camera } from "lucide-react";
 import DienteV2, { type Cara } from "./DienteV2";
 import ModalHallazgoV2 from "./ModalHallazgoV2";
-import { listarHallazgosPacienteV2, eliminarHallazgoV2 } from "@/actions/odontogramaV2";
+import SubirRadiografiaModal from "./SubirRadiografiaModal";
+import GaleriaRadiografiasV2 from "./GaleriaRadiografiasV2";
+import {
+  listarHallazgosPacienteV2,
+  eliminarHallazgoV2,
+  listarRadiografiasV2,
+} from "@/actions/odontogramaV2";
 
 // Permanente (32)
 const Q1_SUP_DER = [18, 17, 16, 15, 14, 13, 12, 11];
@@ -72,12 +78,22 @@ function calcularPintura(hallazgos: Hallazgo[], dientes: number[]) {
   return mapa;
 }
 
+type Radiografia = {
+  id: string;
+  tipo: string;
+  pieza: number | null;
+  url: string;
+  comentario: string | null;
+  fecha: Date | string;
+};
+
 export default function OdontogramaV2({
   pacienteId,
   hallazgosIniciales,
   estados,
   servicios,
   vistaInicial,
+  radiografiasIniciales,
 }: {
   pacienteId: string;
   hallazgosIniciales: Hallazgo[];
@@ -85,15 +101,30 @@ export default function OdontogramaV2({
   servicios: Servicio[];
   /** Calculada por edad en el servidor; el toggle manual siempre puede cambiarla. */
   vistaInicial: Vista;
+  radiografiasIniciales: Radiografia[];
 }) {
   const [vista, setVista] = useState<Vista>(vistaInicial);
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>(hallazgosIniciales);
+  const [radiografias, setRadiografias] = useState<Radiografia[]>(radiografiasIniciales);
+  const [mostrarSubirRx, setMostrarSubirRx] = useState(false);
   const [modalAbierto, setModalAbierto] = useState<{
     diente: number;
     cara: Cara;
     denticion: Denticion;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const piezasConRx = useMemo(
+    () => new Set(radiografias.filter((r) => r.pieza !== null).map((r) => r.pieza)),
+    [radiografias]
+  );
+
+  function refrescarRadiografias() {
+    startTransition(async () => {
+      const nuevas = await listarRadiografiasV2(pacienteId);
+      setRadiografias(nuevas as unknown as Radiografia[]);
+    });
+  }
 
   function refrescar() {
     startTransition(async () => {
@@ -133,6 +164,7 @@ export default function OdontogramaV2({
               numero={n}
               coloresPorCara={p.colores}
               esAusencia={p.ausencia}
+              tieneRx={piezasConRx.has(n)}
               onClickCara={(numero, cara) => setModalAbierto({ diente: numero, cara, denticion })}
             />
           );
@@ -183,19 +215,27 @@ export default function OdontogramaV2({
 
   return (
     <div>
-      {/* Toggle de dentición — el cálculo por edad solo define el valor inicial */}
-      <div className="flex w-full max-w-sm bg-gray-100 rounded-xl p-1 mb-6">
-        {(["permanente", "temporal", "mixta"] as Vista[]).map((v) => (
-          <button
-            key={v}
-            onClick={() => setVista(v)}
-            className={`flex-1 h-9 rounded-lg text-sm font-medium capitalize transition ${
-              vista === v ? "bg-clinica-azul text-white" : "text-gray-600"
-            }`}
-          >
-            {v}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex w-full max-w-sm bg-gray-100 rounded-xl p-1">
+          {(["permanente", "temporal", "mixta"] as Vista[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => setVista(v)}
+              className={`flex-1 h-9 rounded-lg text-sm font-medium capitalize transition ${
+                vista === v ? "bg-clinica-azul text-white" : "text-gray-600"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setMostrarSubirRx(true)}
+          className="h-10 px-4 border border-clinica-azul text-clinica-azul rounded-lg text-sm font-medium hover:bg-clinica-azulClaro transition flex items-center gap-1.5"
+        >
+          <Camera size={16} />
+          Subir Radiografía
+        </button>
       </div>
 
       {(vista === "permanente" || vista === "mixta") &&
@@ -231,6 +271,11 @@ export default function OdontogramaV2({
             "Cuadrante 7: Inferior Izquierdo",
           ]
         )}
+
+      <div className="mb-6">
+        <h2 className="font-medium text-clinica-azulOscuro mb-3">Radiografías</h2>
+        <GaleriaRadiografiasV2 radiografias={radiografias} />
+      </div>
 
       {/* Resumen de Hallazgos — el historial legal completo, sin importar la vista activa */}
       <div className="mt-6">
@@ -302,6 +347,13 @@ export default function OdontogramaV2({
           servicios={servicios}
           onCerrar={() => setModalAbierto(null)}
           onGuardado={refrescar}
+        />
+      )}
+      {mostrarSubirRx && (
+        <SubirRadiografiaModal
+          pacienteId={pacienteId}
+          onCerrar={() => setMostrarSubirRx(false)}
+          onSubida={refrescarRadiografias}
         />
       )}
     </div>

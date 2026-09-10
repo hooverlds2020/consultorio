@@ -4,7 +4,7 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { puedeGestionarPacientes, esSuperAdmin } from "@/lib/permisos";
 import { prisma } from "@/lib/prisma";
-import { listarEstadosCatalogoV2, listarHallazgosPacienteV2 } from "@/actions/odontogramaV2";
+import { listarEstadosCatalogoV2, listarHallazgosPacienteV2, listarRadiografiasV2 } from "@/actions/odontogramaV2";
 import { listarServiciosActivos } from "@/actions/catalogo";
 import { calcularEdad } from "@/lib/validaciones/paciente.schema";
 import OdontogramaV2 from "@/components/odontograma/OdontogramaV2";
@@ -26,10 +26,11 @@ export default async function OdontogramaV2PreviewPage({ params }: { params: { i
     notFound();
   }
 
-  const [estados, hallazgos, servicios] = await Promise.all([
+  const [estados, hallazgos, servicios, radiografias] = await Promise.all([
     listarEstadosCatalogoV2(),
     listarHallazgosPacienteV2(paciente.id),
     listarServiciosActivos(),
+    listarRadiografiasV2(paciente.id),
   ]);
 
   const edad = calcularEdad(paciente.fechaNacimiento);
@@ -60,6 +61,7 @@ export default async function OdontogramaV2PreviewPage({ params }: { params: { i
           estados={estados}
           servicios={servicios as any}
           vistaInicial={vistaInicial}
+          radiografiasIniciales={radiografias as any}
         />
       </div>
     </div>
