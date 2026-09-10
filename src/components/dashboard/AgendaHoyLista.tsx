@@ -7,6 +7,8 @@ type Cita = {
   paciente: { nombre: string; apellidos: string };
 };
 
+const MAXIMO_VISIBLE = 3;
+
 function formatoHora(fecha: Date | string): string {
   return new Date(fecha).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
 }
@@ -25,18 +27,23 @@ function ListaCitasDia({ citas }: { citas: Cita[] }) {
   if (citas.length === 0) {
     return <p className="text-xs text-gray-400 italic py-1">Sin citas programadas</p>;
   }
+
+  const visibles = citas.slice(0, MAXIMO_VISIBLE);
+  const restantes = citas.length - visibles.length;
+
   return (
-    <ul className="space-y-1.5">
-      {citas.map((cita) => (
-        <li key={cita.id} className="flex items-baseline gap-2 text-sm">
-          <span className="font-medium text-gray-700 tabular-nums shrink-0">
-            {formatoHora(cita.horaInicio)}
-          </span>
-          <span className="text-gray-600 truncate">
+    <ul className="space-y-2">
+      {visibles.map((cita) => (
+        <li key={cita.id} className="text-sm">
+          <p className="font-medium text-gray-700 tabular-nums">{formatoHora(cita.horaInicio)}</p>
+          <p className="text-gray-600 leading-snug break-words">
             {cita.paciente.nombre} {cita.paciente.apellidos}
-          </span>
+          </p>
         </li>
       ))}
+      {restantes > 0 && (
+        <li className="text-xs text-clinica-azul font-medium">+{restantes} más</li>
+      )}
     </ul>
   );
 }
@@ -50,7 +57,7 @@ export default function AgendaHoyLista({ citasPorDia }: { citasPorDia: { fecha: 
     <div className="bg-white rounded-xl border shadow-sm p-4 md:p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-700">Próximos 3 días</h3>
-        <Link href="/panel/agenda" className="text-xs text-clinica-azul hover:underline">
+        <Link href="/panel/agenda/mes" className="text-xs text-clinica-azul hover:underline">
           Ver agenda completa →
         </Link>
       </div>
@@ -61,16 +68,17 @@ export default function AgendaHoyLista({ citasPorDia }: { citasPorDia: { fecha: 
           <p className="text-sm">Sin citas en los próximos 3 días</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {citasPorDia.map((dia, i) => {
             const esHoy = i === 0;
             return (
-              <div
+              <Link
                 key={dia.fecha}
-                className={`rounded-lg p-3 ${
+                href={`/panel/agenda?fecha=${dia.fecha}`}
+                className={`rounded-lg p-3 transition hover:shadow-md ${
                   esHoy && dia.citas.length > 0
-                    ? "bg-orange-50 border-2 border-orange-300"
-                    : "bg-gray-50 border border-gray-100"
+                    ? "bg-orange-50 border-2 border-orange-300 hover:bg-orange-100"
+                    : "bg-gray-50 border border-gray-100 hover:bg-gray-100"
                 }`}
               >
                 <p
@@ -85,7 +93,7 @@ export default function AgendaHoyLista({ citasPorDia }: { citasPorDia: { fecha: 
                   )}
                 </p>
                 <ListaCitasDia citas={dia.citas} />
-              </div>
+              </Link>
             );
           })}
         </div>
