@@ -41,6 +41,7 @@ type Hallazgo = {
   estadoLabel: string;
   colorHex: string;
   cie10Codigo: string | null;
+  cie10Desc: string | null;
   tratamientoNombre: string | null;
   comentario: string | null;
 };
@@ -302,7 +303,12 @@ export default function OdontogramaV2({
               )}
               {hallazgos.map((h) => {
                 const diagnosticoPlan =
-                  [h.cie10Codigo, h.tratamientoNombre].filter(Boolean).join(" — ") || "-";
+                  [
+                    h.cie10Codigo ? `${h.cie10Codigo}${h.cie10Desc ? " " + h.cie10Desc : ""}` : null,
+                    h.tratamientoNombre,
+                  ]
+                    .filter(Boolean)
+                    .join(" — ") || "-";
                 return (
                   <tr key={h.id} className="border-t">
                     <td className="px-4 py-2 text-gray-600 whitespace-nowrap">

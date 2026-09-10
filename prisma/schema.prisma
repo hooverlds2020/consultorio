@@ -527,3 +527,16 @@ model PacienteRadiografia {
 
   @@map("paciente_radiografias")
 }
+
+// Catálogo CIE-10 — solo capítulos dentales (K00-K08 + S02.5), no los
+// ~14,000 códigos completos. Compilado de la clasificación CIE-10
+// estándar, no es una importación literal del archivo oficial DGIS.
+model Cie10DiagnosticoV2 {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codigo      String  @unique
+  descripcion String
+  capitulo    String?
+  grupo       String?
+
+  @@map("cie10_diagnosticos_v2")
+}

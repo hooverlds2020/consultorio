@@ -35,7 +35,8 @@ export async function crearHallazgoV2(
     dienteFdi: number;
     cara: string;
     estadoKey: string;
-    cie10: string;
+    cie10Codigo: string;
+    cie10Desc: string;
     tratamientoId: string;
     tratamientoNombre: string;
     comentario: string;
@@ -62,7 +63,8 @@ export async function crearHallazgoV2(
       estadoKey: datos.estadoKey,
       estadoLabel: estado.label,
       colorHex: estado.colorHex,
-      cie10Codigo: datos.cie10 || null,
+      cie10Codigo: datos.cie10Codigo || null,
+      cie10Desc: datos.cie10Desc || null,
       tratamientoId: datos.tratamientoId || null,
       tratamientoNombre: datos.tratamientoNombre || null,
       comentario: datos.comentario || null,
@@ -236,5 +238,25 @@ export async function listarRadiografiasV2(pacienteId: string) {
   return prisma.pacienteRadiografia.findMany({
     where: { pacienteId },
     orderBy: { fecha: "desc" },
+  });
+}
+
+// ==========================================
+// CIE-10 dental (Paso 6)
+// ==========================================
+
+export async function buscarCie10V2(query: string) {
+  const texto = query.trim();
+  if (texto.length < 2) return [];
+
+  return prisma.cie10DiagnosticoV2.findMany({
+    where: {
+      OR: [
+        { codigo: { contains: texto, mode: "insensitive" } },
+        { descripcion: { contains: texto, mode: "insensitive" } },
+      ],
+    },
+    orderBy: { codigo: "asc" },
+    take: 15,
   });
 }
