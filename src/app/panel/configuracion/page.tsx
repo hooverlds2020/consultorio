@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, ListChecks, Globe, Clock, Grid3x3, Image as ImageIcon } from "lucide-react";
+import { Users, ListChecks, Globe, Clock, Grid3x3, Image as ImageIcon, Send } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { esSuperAdmin } from "@/lib/permisos";
 
@@ -11,6 +11,7 @@ const SECCIONES = [
   { href: "/panel/configuracion/horarios", titulo: "Horario de atención", descripcion: "Días y horas en que la clínica recibe pacientes", icono: Clock },
   { href: "/panel/configuracion/odontograma", titulo: "Estados del Odontograma", descripcion: "Catálogo de estados y colores", icono: Grid3x3 },
   { href: "/panel/configuracion/marca", titulo: "Logo del negocio", descripcion: "Se usa en login, panel, página web y PDF de cotizaciones", icono: ImageIcon },
+  { href: "/panel/configuracion/telegram", titulo: "Recordatorios por Telegram", descripcion: "Resumen diario de citas, gratis y sin límite de mensajes", icono: Send },
   { href: "/panel/config-landing", titulo: "Editar página web", descripcion: "Contenido de la landing pública (inicio, testimonios, galería, contacto)", icono: Globe },
 ];
 

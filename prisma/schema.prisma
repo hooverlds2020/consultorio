@@ -550,3 +550,14 @@ model ConfiguracionMarca {
 
   @@map("configuracion_marca")
 }
+
+// Configuración de recordatorios por Telegram — una sola fila (singleton).
+model ConfiguracionTelegram {
+  id        String   @id @default(cuid())
+  botToken  String?
+  chatId    String?
+  activo    Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@map("configuracion_telegram")
+}
