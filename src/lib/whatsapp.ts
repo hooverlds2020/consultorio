@@ -31,6 +31,6 @@ export function mensajeRecordatorioCita(params: {
 
   return (
     `Hola ${params.nombrePaciente}, te recordamos tu cita el ${fechaTexto} a las ${horaTexto} ` +
-    `para ${params.tipoTratamiento} en Laboratorio y Consultorio Dental. ¡Te esperamos!`
+    `para ${params.tipoTratamiento} en Consultorio Dental. ¡Te esperamos!`
   );
 }

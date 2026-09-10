@@ -20,7 +20,7 @@ export default function NavLanding({ logoUrl }: { logoUrl: string }) {
         <span className="flex items-center gap-2 font-bold text-clinica-azulOscuro">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoUrl} alt="Logo" className="h-10 w-auto max-w-[140px] object-contain" />
-          Laboratorio y Consultorio Dental
+          Consultorio Dental
         </span>
 
         <div className="hidden md:flex items-center gap-6 text-sm text-gray-600">

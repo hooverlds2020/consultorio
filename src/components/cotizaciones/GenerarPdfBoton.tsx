@@ -75,7 +75,7 @@ export default function GenerarPdfBoton({ cotizacion }: { cotizacion: Cotizacion
 
     doc.setFontSize(16);
     doc.setTextColor(15, 111, 191); // azul clínica
-    doc.text("Laboratorio y Consultorio Dental", xTexto, 18);
+    doc.text("Consultorio Dental", xTexto, 18);
 
     doc.setFontSize(11);
     doc.setTextColor(60, 60, 60);

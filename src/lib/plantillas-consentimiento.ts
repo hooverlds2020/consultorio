@@ -1,7 +1,7 @@
 export const PLANTILLAS_CONSENTIMIENTO: Record<string, string> = {
   General:
     "Declaro que he sido informado(a) de manera clara sobre el diagnóstico, el tratamiento propuesto, " +
-    "sus beneficios, riesgos y alternativas. Autorizo al personal de Laboratorio y Consultorio Dental " +
+    "sus beneficios, riesgos y alternativas. Autorizo al personal de Consultorio Dental " +
     "a realizar el procedimiento descrito, entendiendo que ningún tratamiento dental está exento de riesgos.",
   Cirugía:
     "Declaro que he sido informado(a) sobre el procedimiento quirúrgico a realizar, sus riesgos " +

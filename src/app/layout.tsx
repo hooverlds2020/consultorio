@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Laboratorio y Consultorio Dental",
+  title: "Consultorio Dental",
   description: "Sistema integral de administración clínica y de laboratorio dental",
   icons: {
     icon: "/favicon.ico",

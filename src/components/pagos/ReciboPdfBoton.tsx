@@ -18,7 +18,7 @@ export default function ReciboPdfBoton({ pago }: { pago: PagoRecibo }) {
 
     doc.setFontSize(16);
     doc.setTextColor(15, 111, 191);
-    doc.text("Laboratorio y Consultorio Dental", 14, 18);
+    doc.text("Consultorio Dental", 14, 18);
 
     doc.setFontSize(12);
     doc.setTextColor(60, 60, 60);

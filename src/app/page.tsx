@@ -204,7 +204,7 @@ export default async function InicioPage() {
       </section>
 
       <footer className="bg-clinica-azulOscuro text-white text-center py-6 text-sm">
-        © {new Date().getFullYear()} Laboratorio y Consultorio Dental. Todos los derechos reservados.
+        © {new Date().getFullYear()} Consultorio Dental. Todos los derechos reservados.
       </footer>
     </main>
   );

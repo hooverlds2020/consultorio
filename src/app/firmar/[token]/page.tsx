@@ -13,7 +13,7 @@ export default async function FirmarPage({ params }: { params: { token: string }
     <main className="min-h-screen bg-clinica-azulClaro flex items-center justify-center p-4">
       <div className="w-full max-w-[480px] bg-white rounded-2xl shadow-lg p-6 md:p-8">
         <h1 className="text-center text-[18px] font-bold text-clinica-azulOscuro mb-1">
-          Laboratorio y Consultorio Dental
+          Consultorio Dental
         </h1>
         <p className="text-center text-sm text-gray-500 mb-6">Consentimiento informado</p>
 

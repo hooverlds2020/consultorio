@@ -29,7 +29,7 @@ export default function CumpleanosProximos({ cumpleanos }: { cumpleanos: Cumple[
                 <a
                   href={construirLinkWhatsapp(
                     p.whatsapp,
-                    `¡Feliz cumpleaños, ${p.nombre}! Todo el equipo de Laboratorio y Consultorio Dental te desea un excelente día. 🎉`
+                    `¡Feliz cumpleaños, ${p.nombre}! Todo el equipo de Consultorio Dental te desea un excelente día. 🎉`
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
