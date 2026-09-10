@@ -138,13 +138,25 @@ export async function obtenerCitasDelDia(fecha: string) {
   const fin = new Date(`${fecha}T23:59:59`);
 
   return prisma.cita.findMany({
-    where: { fecha: { gte: inicio, lte: fin } },
+    where: { fecha: { gte: inicio, lte: fin }, eliminadoEn: null },
     orderBy: { horaInicio: "asc" },
     include: {
       paciente: { select: { id: true, nombre: true, apellidos: true, whatsapp: true } },
       dentista: { select: { id: true, nombre: true } },
     },
   });
+}
+
+export async function eliminarCita(citaId: string): Promise<{ ok: boolean; mensaje?: string }> {
+  await requerirPermisoAgenda();
+
+  await prisma.cita.update({
+    where: { id: citaId },
+    data: { eliminadoEn: new Date() },
+  });
+
+  revalidatePath("/panel/agenda");
+  return { ok: true };
 }
 
 export async function obtenerDentistas() {

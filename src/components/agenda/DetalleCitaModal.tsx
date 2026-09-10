@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { ESTATUS_CITA_LABEL, ESTATUS_CITA_COLOR } from "@/lib/validaciones/cita.schema";
 import { construirLinkWhatsapp, mensajeRecordatorioCita } from "@/lib/whatsapp";
+import { eliminarCita } from "@/actions/agenda";
 import type { EstatusCita } from "@prisma/client";
 
 const OPCIONES_ESTATUS: EstatusCita[] = [
@@ -34,18 +35,29 @@ export default function DetalleCitaModal({
   cita,
   onCambiarEstatus,
   onCerrar,
+  onEliminada,
 }: {
   cita: Cita;
   onCambiarEstatus: (id: string, estatus: EstatusCita) => void;
   onCerrar: () => void;
+  onEliminada: () => void;
 }) {
   const [estatus, setEstatus] = useState(cita.estatus as EstatusCita);
   const [isPending, startTransition] = useTransition();
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [eliminando, startTransitionEliminar] = useTransition();
 
   function handleCambiarEstatus(nuevo: EstatusCita) {
     setEstatus(nuevo);
     startTransition(() => {
       onCambiarEstatus(cita.id, nuevo);
+    });
+  }
+
+  function handleEliminar() {
+    startTransitionEliminar(async () => {
+      await eliminarCita(cita.id);
+      onEliminada();
     });
   }
 
@@ -119,6 +131,36 @@ export default function DetalleCitaModal({
             Enviar recordatorio por WhatsApp
           </a>
         )}
+
+        <div className="border-t mt-4 pt-4">
+          {confirmandoEliminar ? (
+            <div className="bg-red-50 rounded-lg p-3">
+              <p className="text-sm text-red-700 mb-2">¿Eliminar esta cita? No se puede deshacer.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEliminar}
+                  disabled={eliminando}
+                  className="flex-1 h-10 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-60"
+                >
+                  {eliminando ? "Eliminando..." : "Sí, eliminar"}
+                </button>
+                <button
+                  onClick={() => setConfirmandoEliminar(false)}
+                  className="flex-1 h-10 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmandoEliminar(true)}
+              className="w-full h-10 text-sm text-red-500 hover:underline"
+            >
+              Eliminar cita
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -60,6 +60,15 @@ export default function AgendaDia({
     router.refresh();
   }
 
+  function handleCitaEliminada() {
+    setCitaSeleccionada(null);
+    startTransition(async () => {
+      const nuevasCitas = await obtenerCitasDelDia(fecha);
+      setCitas(nuevasCitas);
+    });
+    router.refresh();
+  }
+
   const columnas =
     vista === "sillon"
       ? [
@@ -180,6 +189,7 @@ export default function AgendaDia({
           cita={citaSeleccionada}
           onCambiarEstatus={handleCambiarEstatus}
           onCerrar={() => setCitaSeleccionada(null)}
+          onEliminada={handleCitaEliminada}
         />
       )}
     </div>

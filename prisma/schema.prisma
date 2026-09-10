@@ -149,6 +149,8 @@ model Cita {
   planTratamientoId String?
   planTratamiento   PlanTratamiento? @relation(fields: [planTratamientoId], references: [id])
 
+  eliminadoEn DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
