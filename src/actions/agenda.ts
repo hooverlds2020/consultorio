@@ -147,6 +147,28 @@ export async function obtenerCitasDelDia(fecha: string) {
   });
 }
 
+/** Cuántas citas hay cada día de un mes — para la vista de calendario mensual. */
+export async function obtenerConteoCitasDelMes(anio: number, mes: number) {
+  const inicio = new Date(anio, mes - 1, 1, 0, 0, 0);
+  const fin = new Date(anio, mes, 0, 23, 59, 59); // último día del mes
+
+  const citas = await prisma.cita.findMany({
+    where: { fecha: { gte: inicio, lte: fin }, eliminadoEn: null },
+    select: { fecha: true, estatus: true },
+  });
+
+  const conteoPorDia = new Map<string, { total: number; atrasadasONoShow: number }>();
+  for (const cita of citas) {
+    const diaISO = new Date(cita.fecha).toLocaleDateString("en-CA");
+    const actual = conteoPorDia.get(diaISO) ?? { total: 0, atrasadasONoShow: 0 };
+    actual.total += 1;
+    if (cita.estatus === "NO_ASISTIO") actual.atrasadasONoShow += 1;
+    conteoPorDia.set(diaISO, actual);
+  }
+
+  return Array.from(conteoPorDia.entries()).map(([fecha, datos]) => ({ fecha, ...datos }));
+}
+
 export async function eliminarCita(citaId: string): Promise<{ ok: boolean; mensaje?: string }> {
   await requerirPermisoAgenda();
 

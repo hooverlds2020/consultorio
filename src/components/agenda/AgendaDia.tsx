@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { obtenerCitasDelDia, cambiarEstatusCita } from "@/actions/agenda";
 import { hoyEnZonaClinica, sumarDiasEnZonaClinica } from "@/lib/fecha";
 import { diaSemanaDeFecha, horaTextoADecimal, NOMBRE_DIA, type HorariosSemana } from "@/lib/horarioServicio";
@@ -87,7 +88,12 @@ export default function AgendaDia({
 
   return (
     <div className="w-full max-w-[1200px] mx-auto">
-      <h1 className="text-[22px] font-bold text-clinica-azulOscuro mb-4">Agenda</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-[22px] font-bold text-clinica-azulOscuro">Agenda</h1>
+        <Link href="/panel/agenda/mes" className="text-sm text-clinica-azul hover:underline">
+          Ver mes →
+        </Link>
+      </div>
 
       {/* Controles de fecha — botones grandes para el dedo */}
       <div className="flex items-center gap-2 mb-4">
