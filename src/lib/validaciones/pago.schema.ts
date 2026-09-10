@@ -6,6 +6,7 @@ export const pagoSchema = z.object({
     errorMap: () => ({ message: "Selecciona un método de pago" }),
   }),
   planTratamientoId: z.string().optional().or(z.literal("")),
+  concepto: z.string().trim().max(200).optional().or(z.literal("")),
 });
 
 export const METODO_PAGO_LABEL: Record<string, string> = {

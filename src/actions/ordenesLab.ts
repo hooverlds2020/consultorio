@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { puedeGestionarOrdenesLab, puedeEditarClinico } from "@/lib/permisos";
-import { ordenLabSchema } from "@/lib/validaciones/orden-lab.schema";
+import { ordenLabSchema, TIPO_TRABAJO_LABEL } from "@/lib/validaciones/orden-lab.schema";
+import { generarFolioRecibo } from "@/lib/validaciones/pago.schema";
 import type { EstatusOrdenLab } from "@prisma/client";
 
 export type EstadoOrdenLab = {
@@ -22,6 +23,41 @@ async function requerirPermisoLab() {
     throw new Error("No tienes permiso para gestionar órdenes de laboratorio.");
   }
   return session;
+}
+
+/**
+ * Registra en Caja, como egreso, el anticipo que ya se le pagó al
+ * laboratorio externo — solo el dinero que de verdad salió, no el costo
+ * total comprometido (eso se ve aparte en el banner de deuda).
+ * Se crea una sola vez por orden: si ya existe un egreso ligado a esta
+ * orden, no se duplica ni se ajusta en ediciones posteriores.
+ */
+async function asegurarEgresoAnticipoLab(
+  ordenId: string,
+  pacienteId: string,
+  anticipo: number,
+  registradoPorId: string,
+  descripcionOrden: string
+) {
+  if (anticipo <= 0) return;
+
+  const yaExiste = await prisma.pago.findFirst({
+    where: { ordenLaboratorioId: ordenId, tipo: "EGRESO" },
+  });
+  if (yaExiste) return;
+
+  await prisma.pago.create({
+    data: {
+      pacienteId,
+      ordenLaboratorioId: ordenId,
+      registradoPorId,
+      tipo: "EGRESO",
+      concepto: `Anticipo a laboratorio — ${descripcionOrden}`,
+      monto: anticipo.toFixed(2),
+      metodo: "EFECTIVO",
+      folioRecibo: generarFolioRecibo(),
+    },
+  });
 }
 
 export async function crearOrdenLab(
@@ -66,7 +102,22 @@ export async function crearOrdenLab(
     },
   });
 
+  const anticipoInicial =
+    datos.anticipoLaboratorio !== undefined && datos.anticipoLaboratorio !== ""
+      ? Number(datos.anticipoLaboratorio)
+      : 0;
+  if (anticipoInicial > 0) {
+    await asegurarEgresoAnticipoLab(
+      orden.id,
+      datos.pacienteId,
+      anticipoInicial,
+      session.user.id,
+      TIPO_TRABAJO_LABEL[datos.tipoTrabajo]
+    );
+  }
+
   revalidatePath("/panel/lab/ordenes");
+  revalidatePath("/panel/caja");
   return { ok: true, ordenId: orden.id };
 }
 
@@ -92,7 +143,7 @@ export async function actualizarOrdenLab(
     return { ok: false, mensaje: "Define fecha promesa para control de retrasos" };
   }
 
-  await prisma.ordenLaboratorio.update({
+  const ordenActualizada = await prisma.ordenLaboratorio.update({
     where: { id: ordenId },
     data: {
       tecnicoAsignadoId: datos.tecnicoAsignadoId || null,
@@ -109,7 +160,19 @@ export async function actualizarOrdenLab(
     },
   });
 
+  const anticipoActual = datos.anticipoLaboratorio ? Number(datos.anticipoLaboratorio) : 0;
+  if (anticipoActual > 0) {
+    await asegurarEgresoAnticipoLab(
+      ordenId,
+      ordenActualizada.pacienteId,
+      anticipoActual,
+      session.user.id,
+      TIPO_TRABAJO_LABEL[ordenActualizada.tipoTrabajo]
+    );
+  }
+
   revalidatePath("/panel/lab/ordenes");
+  revalidatePath("/panel/caja");
   return { ok: true };
 }
 

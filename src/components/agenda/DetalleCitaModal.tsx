@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { ESTATUS_CITA_LABEL, ESTATUS_CITA_COLOR } from "@/lib/validaciones/cita.schema";
 import { construirLinkWhatsapp, mensajeRecordatorioCita } from "@/lib/whatsapp";
 import { eliminarCita } from "@/actions/agenda";
+import { registrarCobroCita } from "@/actions/pagos";
 import type { EstatusCita } from "@prisma/client";
 
 const OPCIONES_ESTATUS: EstatusCita[] = [
@@ -14,12 +15,19 @@ const OPCIONES_ESTATUS: EstatusCita[] = [
   "NO_ASISTIO",
 ];
 
+const METODOS_PAGO = [
+  { valor: "EFECTIVO", etiqueta: "Efectivo" },
+  { valor: "TARJETA", etiqueta: "Tarjeta" },
+  { valor: "TRANSFERENCIA", etiqueta: "Transferencia" },
+] as const;
+
 function formatoHora(fecha: Date | string): string {
   return new Date(fecha).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
 }
 
 type Cita = {
   id: string;
+  pacienteId: string;
   horaInicio: Date | string;
   horaFin: Date | string;
   tipoTratamiento: string;
@@ -46,6 +54,37 @@ export default function DetalleCitaModal({
   const [isPending, startTransition] = useTransition();
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [eliminando, startTransitionEliminar] = useTransition();
+
+  const [mostrarCobrar, setMostrarCobrar] = useState(false);
+  const [montoCobro, setMontoCobro] = useState("");
+  const [metodoCobro, setMetodoCobro] = useState<"EFECTIVO" | "TARJETA" | "TRANSFERENCIA">("EFECTIVO");
+  const [conceptoCobro, setConceptoCobro] = useState(`Cobro — ${cita.tipoTratamiento}`);
+  const [cobrando, startTransitionCobrar] = useTransition();
+  const [cobroRealizado, setCobroRealizado] = useState(false);
+  const [errorCobro, setErrorCobro] = useState("");
+
+  function handleCobrar() {
+    setErrorCobro("");
+    const monto = Number(montoCobro);
+    if (!monto || monto <= 0) {
+      setErrorCobro("Indica un monto válido.");
+      return;
+    }
+    startTransitionCobrar(async () => {
+      const resultado = await registrarCobroCita(
+        cita.id,
+        cita.pacienteId,
+        monto,
+        metodoCobro,
+        conceptoCobro
+      );
+      if (resultado.ok) {
+        setCobroRealizado(true);
+      } else {
+        setErrorCobro(resultado.mensaje ?? "No se pudo registrar el cobro.");
+      }
+    });
+  }
 
   function handleCambiarEstatus(nuevo: EstatusCita) {
     setEstatus(nuevo);
@@ -111,6 +150,67 @@ export default function DetalleCitaModal({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="mb-4">
+          {cobroRealizado ? (
+            <p className="text-sm text-green-600 bg-green-50 rounded-lg p-3">
+              ✓ Cobro de ${Number(montoCobro).toLocaleString("es-MX")} registrado en Caja.
+            </p>
+          ) : mostrarCobrar ? (
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              {errorCobro && <p className="text-red-600 text-xs">{errorCobro}</p>}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Monto</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={montoCobro}
+                  onChange={(e) => setMontoCobro(e.target.value)}
+                  placeholder="800.00"
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3 text-[16px]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Método</label>
+                <select
+                  value={metodoCobro}
+                  onChange={(e) => setMetodoCobro(e.target.value as typeof metodoCobro)}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3 text-[16px]"
+                >
+                  {METODOS_PAGO.map((m) => (
+                    <option key={m.valor} value={m.valor}>
+                      {m.etiqueta}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Concepto</label>
+                <input
+                  type="text"
+                  value={conceptoCobro}
+                  onChange={(e) => setConceptoCobro(e.target.value)}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3 text-[16px]"
+                />
+              </div>
+              <button
+                onClick={handleCobrar}
+                disabled={cobrando}
+                className="w-full h-11 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-60"
+              >
+                {cobrando ? "Registrando..." : "Confirmar cobro"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setMostrarCobrar(true)}
+              className="w-full h-12 bg-green-600 text-white rounded-lg font-medium text-[16px] hover:bg-green-700 transition"
+            >
+              Cobrar
+            </button>
+          )}
         </div>
 
         {cita.paciente.whatsapp && (

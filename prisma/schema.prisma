@@ -149,6 +149,8 @@ model Cita {
   planTratamientoId String?
   planTratamiento   PlanTratamiento? @relation(fields: [planTratamientoId], references: [id])
 
+  pagos Pago[]
+
   eliminadoEn DateTime?
 
   createdAt DateTime @default(now())
@@ -278,6 +280,8 @@ model OrdenLaboratorio {
   costoLaboratorio    Decimal? @db.Decimal(10, 2) // lo que cobra el laboratorio externo
   anticipoLaboratorio Decimal? @db.Decimal(10, 2) // lo que ya se le pagó a ese laboratorio
 
+  pagos Pago[]
+
   estatus              EstatusOrdenLab @default(RECIBIDO)
   fechaSolicitud       DateTime        @default(now())
   fechaEntregaEstimada DateTime?
@@ -306,9 +310,15 @@ model Pago {
   paciente          Paciente         @relation(fields: [pacienteId], references: [id])
   planTratamientoId String?
   planTratamiento   PlanTratamiento? @relation(fields: [planTratamientoId], references: [id])
+  citaId            String?
+  cita              Cita?            @relation(fields: [citaId], references: [id])
+  ordenLaboratorioId String?
+  ordenLaboratorio  OrdenLaboratorio? @relation(fields: [ordenLaboratorioId], references: [id])
   registradoPorId   String
   registradoPor     Usuario          @relation(fields: [registradoPorId], references: [id])
 
+  tipo        TipoMovimientoCaja @default(INGRESO)
+  concepto    String?
   monto       Decimal    @db.Decimal(10, 2)
   metodo      MetodoPago
   fecha       DateTime   @default(now())
@@ -319,6 +329,11 @@ model Pago {
 
   @@index([fecha])
   @@map("pagos")
+}
+
+enum TipoMovimientoCaja {
+  INGRESO
+  EGRESO
 }
 
 // ==========================================
