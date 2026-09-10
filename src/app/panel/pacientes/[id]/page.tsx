@@ -30,7 +30,7 @@ export default async function FichaPacientePage({ params }: { params: { id: stri
 
   const pestanas = [
     { href: `/panel/pacientes/${paciente.id}/historial`, label: "Historial clínico" },
-    { href: `/panel/pacientes/${paciente.id}/odontograma`, label: "Odontograma" },
+    { href: `/panel/pacientes/${paciente.id}/odontograma-v2`, label: "Odontograma" },
     { href: `/panel/pacientes/${paciente.id}/cotizaciones`, label: "Cotizaciones" },
     { href: `/panel/pacientes/${paciente.id}/pagos`, label: "Pagos" },
     { href: `/panel/pacientes/${paciente.id}/consentimientos`, label: "Consentimientos" },
