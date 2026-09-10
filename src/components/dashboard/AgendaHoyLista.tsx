@@ -1,20 +1,11 @@
 import Link from "next/link";
-import { Clock, Stethoscope } from "lucide-react";
-import { ESTATUS_CITA_LABEL, ESTATUS_CITA_COLOR } from "@/lib/validaciones/cita.schema";
+import { Clock, AlertCircle } from "lucide-react";
 
 type Cita = {
   id: string;
-  fecha: Date | string;
   horaInicio: Date | string;
-  tipoTratamiento: string;
-  estatus: string;
   paciente: { nombre: string; apellidos: string };
-  dentista: { nombre: string };
 };
-
-function iniciales(nombre: string, apellidos: string): string {
-  return `${nombre[0] ?? ""}${apellidos[0] ?? ""}`.toUpperCase();
-}
 
 function formatoHora(fecha: Date | string): string {
   return new Date(fecha).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
@@ -35,28 +26,14 @@ function ListaCitasDia({ citas }: { citas: Cita[] }) {
     return <p className="text-xs text-gray-400 italic py-1">Sin citas programadas</p>;
   }
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-1.5">
       {citas.map((cita) => (
-        <li key={cita.id} className="flex items-center gap-2">
-          <div className="w-7 h-7 shrink-0 rounded-full bg-clinica-azulClaro text-clinica-azulOscuro flex items-center justify-center text-[11px] font-semibold">
-            {iniciales(cita.paciente.nombre, cita.paciente.apellidos)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-gray-800 truncate">
-              {formatoHora(cita.horaInicio)} — {cita.paciente.nombre} {cita.paciente.apellidos}
-            </p>
-            <p className="text-xs text-gray-500 flex items-center gap-1 truncate">
-              <Stethoscope size={11} /> {cita.tipoTratamiento}
-            </p>
-          </div>
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
-            style={{
-              backgroundColor: `${ESTATUS_CITA_COLOR[cita.estatus]}22`,
-              color: ESTATUS_CITA_COLOR[cita.estatus],
-            }}
-          >
-            {ESTATUS_CITA_LABEL[cita.estatus]}
+        <li key={cita.id} className="flex items-baseline gap-2 text-sm">
+          <span className="font-medium text-gray-700 tabular-nums shrink-0">
+            {formatoHora(cita.horaInicio)}
+          </span>
+          <span className="text-gray-600 truncate">
+            {cita.paciente.nombre} {cita.paciente.apellidos}
           </span>
         </li>
       ))}
@@ -84,20 +61,33 @@ export default function AgendaHoyLista({ citasPorDia }: { citasPorDia: { fecha: 
           <p className="text-sm">Sin citas en los próximos 3 días</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {citasPorDia.map((dia) => (
-            <div key={dia.fecha}>
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5">
-                {etiquetaDia(dia.fecha, hoyISO, mananaISO)}
-                {dia.citas.length > 0 && (
-                  <span className="ml-1 normal-case font-normal text-gray-400">
-                    ({dia.citas.length})
-                  </span>
-                )}
-              </p>
-              <ListaCitasDia citas={dia.citas} />
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {citasPorDia.map((dia, i) => {
+            const esHoy = i === 0;
+            return (
+              <div
+                key={dia.fecha}
+                className={`rounded-lg p-3 ${
+                  esHoy && dia.citas.length > 0
+                    ? "bg-orange-50 border-2 border-orange-300"
+                    : "bg-gray-50 border border-gray-100"
+                }`}
+              >
+                <p
+                  className={`text-xs font-semibold uppercase mb-2 flex items-center gap-1 ${
+                    esHoy && dia.citas.length > 0 ? "text-orange-700" : "text-gray-500"
+                  }`}
+                >
+                  {esHoy && dia.citas.length > 0 && <AlertCircle size={12} />}
+                  {etiquetaDia(dia.fecha, hoyISO, mananaISO)}
+                  {dia.citas.length > 0 && (
+                    <span className="normal-case font-normal opacity-70">({dia.citas.length})</span>
+                  )}
+                </p>
+                <ListaCitasDia citas={dia.citas} />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
