@@ -31,6 +31,7 @@ model Usuario {
   historiales           HistorialClinico[]
   odontogramas          Odontograma[]
   citasComoDentista     Cita[]                  @relation("CitaDentista")
+  hallazgosOdontogramaV2Creados OdontogramaHallazgoV2[]
   cotizacionesCreadas   Cotizacion[]
   ordenesSolicitadas    OrdenLaboratorio[]      @relation("OrdenDentista")
   ordenesAsignadas      OrdenLaboratorio[]      @relation("OrdenTecnico")
@@ -71,6 +72,8 @@ model Paciente {
   ordenesLaboratorio OrdenLaboratorio[]
   pagos              Pago[]
   consentimientos    Consentimiento[]
+  hallazgosOdontogramaV2 OdontogramaHallazgoV2[]
+  radiografias           PacienteRadiografia[]
 
   @@index([nombre, apellidos])
   @@map("pacientes")
@@ -461,4 +464,66 @@ model Testimonio {
   createdAt      DateTime @default(now())
 
   @@map("testimonios")
+}
+
+// ==========================================
+// ODONTOGRAMA PRO — TABLAS PARALELAS (_v2)
+// No tocan ni reemplazan el modelo Odontograma actual (en producción con
+// datos reales). Paso 1 de un rediseño por fases: solo estructura de
+// datos, sin UI todavía.
+// ==========================================
+
+model CatalogoEstadoOdontogramaV2 {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String  @unique
+  label       String
+  descripcion String?
+  colorHex    String  @map("color_hex")
+  esSistema   Boolean @default(true) @map("es_sistema")
+  activo      Boolean @default(true)
+
+  hallazgos OdontogramaHallazgoV2[]
+
+  @@map("catalogo_estados_odontograma_v2")
+}
+
+model OdontogramaHallazgoV2 {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+
+  denticion String // 'permanente' | 'temporal'
+  fecha     DateTime @default(now())
+  dienteFdi Int      @map("diente_fdi") // 11-48 y 51-85
+
+  cara        String
+  estadoKey   String                      @map("estado_key")
+  estado      CatalogoEstadoOdontogramaV2 @relation(fields: [estadoKey], references: [key])
+  estadoLabel String                      @map("estado_label")
+  colorHex    String                      @map("color_hex")
+
+  cie10Codigo       String? @map("cie10_codigo")
+  cie10Desc         String? @map("cie10_desc")
+  tratamientoId     String? @map("tratamiento_id")
+  tratamientoNombre String? @map("tratamiento_nombre")
+  comentario        String?
+
+  creadoPorId String  @map("creado_por")
+  creadoPor   Usuario @relation(fields: [creadoPorId], references: [id])
+
+  @@map("odontograma_hallazgos_v2")
+}
+
+model PacienteRadiografia {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+
+  tipo       String // Panorámica, Periapical, Aleta, ...
+  pieza      Int?
+  url        String
+  comentario String?
+  fecha      DateTime @default(now())
+
+  @@map("paciente_radiografias")
 }
