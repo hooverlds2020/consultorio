@@ -540,3 +540,13 @@ model Cie10DiagnosticoV2 {
 
   @@map("cie10_diagnosticos_v2")
 }
+
+// Logo del negocio — una sola fila (singleton). Se usa en login, panel,
+// página pública y PDF de cotizaciones, todo desde un solo lugar.
+model ConfiguracionMarca {
+  id        String   @id @default(cuid())
+  logoUrl   String?
+  updatedAt DateTime @updatedAt
+
+  @@map("configuracion_marca")
+}

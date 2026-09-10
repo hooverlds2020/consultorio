@@ -10,23 +10,29 @@ export default function NavPanel({
   enlaces,
   nombreUsuario,
   nombreRol,
+  logoUrl,
 }: {
   enlaces: EnlaceNav[];
   nombreUsuario: string;
   nombreRol: string;
+  logoUrl: string;
 }) {
   const [abierto, setAbierto] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b w-full">
       <div className="max-w-[1200px] mx-auto px-4 h-[60px] flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-bold text-sm text-[#1a5a8a]">
-            Laboratorio y Consultorio Dental
-          </p>
-          <p className="truncate text-[11px] text-gray-500">
-            {nombreUsuario} · {nombreRol}
-          </p>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain shrink-0" />
+          <div className="min-w-0">
+            <p className="truncate font-bold text-sm text-[#1a5a8a]">
+              Laboratorio y Consultorio Dental
+            </p>
+            <p className="truncate text-[11px] text-gray-500">
+              {nombreUsuario} · {nombreRol}
+            </p>
+          </div>
         </div>
 
         {/* Navegación de escritorio — con 10 enlaces, solo cabe cómoda desde lg */}

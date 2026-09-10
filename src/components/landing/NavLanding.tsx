@@ -11,13 +11,17 @@ const ENLACES = [
   { href: "#contacto", label: "Contacto" },
 ];
 
-export default function NavLanding() {
+export default function NavLanding({ logoUrl }: { logoUrl: string }) {
   const [abierto, setAbierto] = useState(false);
 
   return (
     <header className="sticky top-0 bg-white/95 backdrop-blur border-b z-10">
       <nav className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <span className="font-bold text-clinica-azulOscuro">Laboratorio y Consultorio Dental</span>
+        <span className="flex items-center gap-2 font-bold text-clinica-azulOscuro">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain" />
+          Laboratorio y Consultorio Dental
+        </span>
 
         <div className="hidden md:flex items-center gap-6 text-sm text-gray-600">
           {ENLACES.map((e) => (

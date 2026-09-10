@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { listarServiciosActivos } from "@/actions/catalogo";
 import { listarTestimoniosActivos, listarGaleriaActiva } from "@/actions/landing";
 import NavLanding from "@/components/landing/NavLanding";
+import { obtenerLogoNegocio } from "@/actions/marca";
 
 // La landing consulta la base de datos en cada visita (contenido editable
 // desde el panel), así que no debe pre-construirse como página estática
@@ -25,7 +26,7 @@ function linkWhatsapp(numero: string | undefined, mensaje: string): string {
 }
 
 export default async function InicioPage() {
-  const [heroConfig, nosotrosConfig, contactoConfig, servicios, testimonios, galeria] =
+  const [heroConfig, nosotrosConfig, contactoConfig, servicios, testimonios, galeria, logoUrlDb] =
     await Promise.all([
       prisma.configLanding.findUnique({ where: { seccion: "HERO" } }),
       prisma.configLanding.findUnique({ where: { seccion: "NOSOTROS" } }),
@@ -33,7 +34,10 @@ export default async function InicioPage() {
       listarServiciosActivos(),
       listarTestimoniosActivos(),
       listarGaleriaActiva(),
+      obtenerLogoNegocio(),
     ]);
+
+  const logoUrl = logoUrlDb ?? "/logo-cesar-oficial.png";
 
   const hero = (heroConfig?.contenidoJson as ContenidoHero) ?? {};
   const nosotros = (nosotrosConfig?.contenidoJson as ContenidoNosotros) ?? {};
@@ -48,7 +52,7 @@ export default async function InicioPage() {
   return (
     <main className="min-h-screen bg-white text-gray-800">
       {/* Barra de navegación */}
-      <NavLanding />
+      <NavLanding logoUrl={logoUrl} />
 
       {/* Hero */}
       <section id="inicio" className="bg-clinica-azulClaro">

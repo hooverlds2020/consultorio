@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { obtenerLogoNegocio } from "@/actions/marca";
 
 type ItemPdf = {
   servicio: { nombre: string };
@@ -18,17 +20,49 @@ type CotizacionPdf = {
   items: ItemPdf[];
 };
 
+/** Convierte la imagen del logo a base64 para poder incrustarla en el PDF. */
+async function obtenerLogoBase64(): Promise<string | null> {
+  try {
+    const logoUrl = (await obtenerLogoNegocio()) ?? "/logo-cesar-oficial.png";
+    const respuesta = await fetch(logoUrl);
+    const blob = await respuesta.blob();
+    return await new Promise((resolve) => {
+      const lector = new FileReader();
+      lector.onloadend = () => resolve(lector.result as string);
+      lector.onerror = () => resolve(null);
+      lector.readAsDataURL(blob);
+    });
+  } catch {
+    return null; // sin logo, el PDF se genera igual, solo sin la imagen
+  }
+}
+
 export default function GenerarPdfBoton({ cotizacion }: { cotizacion: CotizacionPdf }) {
-  function handleGenerar() {
+  const [generando, setGenerando] = useState(false);
+
+  async function handleGenerar() {
+    setGenerando(true);
+    const logoBase64 = await obtenerLogoBase64();
+
     const doc = new jsPDF();
+    let xTexto = 14;
+
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, "PNG", 14, 10, 16, 16);
+        xTexto = 34; // el texto se recorre para no encimarse con el logo
+      } catch {
+        // Si el formato de imagen no es compatible con jsPDF, seguimos sin logo.
+      }
+    }
 
     doc.setFontSize(16);
     doc.setTextColor(15, 111, 191); // azul clínica
-    doc.text("Laboratorio y Consultorio Dental", 14, 18);
+    doc.text("Laboratorio y Consultorio Dental", xTexto, 18);
 
     doc.setFontSize(11);
     doc.setTextColor(60, 60, 60);
-    doc.text("Cotización de tratamiento", 14, 26);
+    doc.text("Cotización de tratamiento", xTexto, 26);
 
     doc.setFontSize(10);
     doc.text(`Paciente: ${cotizacion.paciente.nombre} ${cotizacion.paciente.apellidos}`, 14, 36);
@@ -67,14 +101,16 @@ export default function GenerarPdfBoton({ cotizacion }: { cotizacion: Cotizacion
     );
 
     doc.save(`cotizacion_${cotizacion.paciente.apellidos}_${cotizacion.id.slice(0, 6)}.pdf`);
+    setGenerando(false);
   }
 
   return (
     <button
       onClick={handleGenerar}
-      className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition"
+      disabled={generando}
+      className="text-sm border border-clinica-azul text-clinica-azul px-4 py-2 rounded-md hover:bg-clinica-azulClaro transition disabled:opacity-60"
     >
-      Descargar PDF
+      {generando ? "Generando..." : "Descargar PDF"}
     </button>
   );
 }
