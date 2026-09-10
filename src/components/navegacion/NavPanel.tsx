@@ -24,7 +24,7 @@ export default function NavPanel({
       <div className="max-w-[1200px] mx-auto px-4 h-[60px] flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain shrink-0" />
+          <img src={logoUrl} alt="Logo" className="h-10 w-auto max-w-[140px] object-contain shrink-0" />
           <div className="min-w-0">
             <p className="truncate font-bold text-sm text-[#1a5a8a]">
               Laboratorio y Consultorio Dental

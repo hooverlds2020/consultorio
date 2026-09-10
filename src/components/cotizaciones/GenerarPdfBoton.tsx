@@ -37,6 +37,16 @@ async function obtenerLogoBase64(): Promise<string | null> {
   }
 }
 
+/** Mide el ancho/alto real de la imagen para no deformarla al insertarla en el PDF. */
+function medirImagen(base64: string): Promise<{ ancho: number; alto: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ ancho: img.naturalWidth, alto: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = base64;
+  });
+}
+
 export default function GenerarPdfBoton({ cotizacion }: { cotizacion: CotizacionPdf }) {
   const [generando, setGenerando] = useState(false);
 
@@ -49,8 +59,15 @@ export default function GenerarPdfBoton({ cotizacion }: { cotizacion: Cotizacion
 
     if (logoBase64) {
       try {
-        doc.addImage(logoBase64, "PNG", 14, 10, 16, 16);
-        xTexto = 34; // el texto se recorre para no encimarse con el logo
+        const medidas = await medirImagen(logoBase64);
+        if (medidas && medidas.ancho > 0 && medidas.alto > 0) {
+          const altoDeseado = 14; // mm — misma altura sin importar la forma del logo
+          const anchoCalculado = altoDeseado * (medidas.ancho / medidas.alto);
+          const anchoFinal = Math.min(anchoCalculado, 50); // tope para logos muy anchos
+          const altoFinal = anchoFinal === anchoCalculado ? altoDeseado : anchoFinal * (medidas.alto / medidas.ancho);
+          doc.addImage(logoBase64, "PNG", 14, 10, anchoFinal, altoFinal);
+          xTexto = 14 + anchoFinal + 6; // el texto se recorre para no encimarse con el logo
+        }
       } catch {
         // Si el formato de imagen no es compatible con jsPDF, seguimos sin logo.
       }
