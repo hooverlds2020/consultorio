@@ -147,22 +147,32 @@ export async function obtenerCitasDelDia(fecha: string) {
   });
 }
 
-/** Cuántas citas hay cada día de un mes — para la vista de calendario mensual. */
+/** Cuántas citas hay cada día de un mes, y de quién — para la vista de calendario mensual. */
 export async function obtenerConteoCitasDelMes(anio: number, mes: number) {
   const inicio = new Date(anio, mes - 1, 1, 0, 0, 0);
   const fin = new Date(anio, mes, 0, 23, 59, 59); // último día del mes
 
   const citas = await prisma.cita.findMany({
     where: { fecha: { gte: inicio, lte: fin }, eliminadoEn: null },
-    select: { fecha: true, estatus: true },
+    orderBy: { horaInicio: "asc" },
+    select: {
+      fecha: true,
+      estatus: true,
+      paciente: { select: { nombre: true, apellidos: true } },
+    },
   });
 
-  const conteoPorDia = new Map<string, { total: number; atrasadasONoShow: number }>();
+  const conteoPorDia = new Map<
+    string,
+    { total: number; atrasadasONoShow: number; pacientes: string[] }
+  >();
+
   for (const cita of citas) {
     const diaISO = new Date(cita.fecha).toLocaleDateString("en-CA");
-    const actual = conteoPorDia.get(diaISO) ?? { total: 0, atrasadasONoShow: 0 };
+    const actual = conteoPorDia.get(diaISO) ?? { total: 0, atrasadasONoShow: 0, pacientes: [] };
     actual.total += 1;
     if (cita.estatus === "NO_ASISTIO") actual.atrasadasONoShow += 1;
+    actual.pacientes.push(cita.paciente.nombre); // solo el nombre — cabe mejor en la celda
     conteoPorDia.set(diaISO, actual);
   }
 

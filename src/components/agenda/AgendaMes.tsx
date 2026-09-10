@@ -5,7 +5,7 @@ import Link from "next/link";
 import { obtenerConteoCitasDelMes } from "@/actions/agenda";
 import { diaSemanaDeFecha, type HorariosSemana } from "@/lib/horarioServicio";
 
-type Conteo = { fecha: string; total: number; atrasadasONoShow: number };
+type Conteo = { fecha: string; total: number; atrasadasONoShow: number; pacientes: string[] };
 
 const NOMBRES_MES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -144,7 +144,7 @@ export default function AgendaMes({
               <Link
                 key={celda.fecha}
                 href={`/panel/agenda?fecha=${celda.fecha}`}
-                className={`min-h-[80px] md:min-h-[100px] border-b border-r p-1.5 md:p-2 flex flex-col hover:bg-clinica-azulClaro transition ${
+                className={`min-h-[90px] md:min-h-[110px] border-b border-r p-1.5 md:p-2 flex flex-col hover:bg-clinica-azulClaro transition ${
                   !celda.delMesActual ? "bg-gray-50/50" : cerrado ? "bg-gray-50" : "bg-white"
                 }`}
               >
@@ -160,15 +160,26 @@ export default function AgendaMes({
                   {celda.diaDelMes}
                 </span>
                 {celda.delMesActual && datos && datos.total > 0 && (
-                  <span
-                    className={`mt-1 self-start text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                      datos.atrasadasONoShow > 0
-                        ? "bg-red-100 text-red-700"
-                        : "bg-clinica-azulClaro text-clinica-azulOscuro"
-                    }`}
-                  >
-                    {datos.total} cita{datos.total === 1 ? "" : "s"}
-                  </span>
+                  <div className="mt-1 space-y-0.5 w-full">
+                    {datos.pacientes.slice(0, 2).map((nombre, idx) => (
+                      <p
+                        key={idx}
+                        className={`text-[9px] md:text-[10px] leading-tight truncate rounded px-1 ${
+                          datos.atrasadasONoShow > 0
+                            ? "bg-red-100 text-red-700"
+                            : "bg-clinica-azulClaro text-clinica-azulOscuro"
+                        }`}
+                        title={nombre}
+                      >
+                        {nombre}
+                      </p>
+                    ))}
+                    {datos.total > 2 && (
+                      <p className="text-[9px] md:text-[10px] text-gray-400 px-1">
+                        +{datos.total - 2} más
+                      </p>
+                    )}
+                  </div>
                 )}
                 {celda.delMesActual && cerrado && (
                   <span className="mt-1 text-[10px] text-gray-400 italic">Cerrado</span>
