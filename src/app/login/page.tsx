@@ -34,9 +34,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#eaf2fb] flex items-center justify-center p-4">
-      <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <h1 className="text-center text-[20px] font-bold text-[#1a5a8a] mb-6">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4" style={{ backgroundColor: "#EEF6FF" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-cesar-oficial.png"
+        alt="César Aguilar Consultorio Dental"
+        className="mb-6"
+        style={{ width: 320, maxWidth: "100%", height: "auto" }}
+      />
+
+      <div
+        className="w-full max-w-[384px] bg-white rounded-2xl p-8"
+        style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.1)" }}
+      >
+        <h1
+          className="text-center text-2xl font-bold mb-6"
+          style={{ color: "#0A2F5C" }}
+        >
           Acceso al sistema
         </h1>
 
@@ -46,33 +60,48 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">Correo</label>
+            <label className="text-sm text-gray-700">Correo</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full h-[48px] rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="tucorreo@ejemplo.com"
+              className="mt-1 w-full h-12 rounded-lg px-4 text-[16px] outline-none border transition"
+              style={{ borderColor: "#B8C9DC" }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#0F4C81")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#B8C9DC")}
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700">Contraseña</label>
+            <label className="text-sm text-gray-700">Contraseña</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full h-[48px] rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+              className="mt-1 w-full h-12 rounded-lg px-4 text-[16px] outline-none border transition"
+              style={{ borderColor: "#B8C9DC" }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#0F4C81")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#B8C9DC")}
             />
           </div>
           <button
             type="submit"
             disabled={cargando}
-            className="w-full h-[48px] rounded-xl bg-[#1f6fb5] text-white font-medium text-[16px] mt-2 active:scale-[0.98] transition disabled:opacity-60"
+            className="w-full h-12 rounded-lg text-white font-medium text-[16px] transition disabled:opacity-60"
+            style={{ backgroundColor: "#0F4C81" }}
           >
             {cargando ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        <p className="text-center mt-4">
+          <a href="#" className="text-sm hover:underline" style={{ color: "#0F4C81" }}>
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
       </div>
     </div>
   );
