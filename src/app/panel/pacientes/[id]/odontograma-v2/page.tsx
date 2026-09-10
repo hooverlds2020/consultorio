@@ -6,6 +6,7 @@ import { puedeGestionarPacientes, esSuperAdmin } from "@/lib/permisos";
 import { prisma } from "@/lib/prisma";
 import { listarEstadosCatalogoV2, listarHallazgosPacienteV2 } from "@/actions/odontogramaV2";
 import { listarServiciosActivos } from "@/actions/catalogo";
+import { calcularEdad } from "@/lib/validaciones/paciente.schema";
 import OdontogramaV2 from "@/components/odontograma/OdontogramaV2";
 
 /**
@@ -31,6 +32,9 @@ export default async function OdontogramaV2PreviewPage({ params }: { params: { i
     listarServiciosActivos(),
   ]);
 
+  const edad = calcularEdad(paciente.fechaNacimiento);
+  const vistaInicial = edad <= 5 ? "temporal" : edad <= 12 ? "mixta" : "permanente";
+
   return (
     <div>
       <Link
@@ -55,6 +59,7 @@ export default async function OdontogramaV2PreviewPage({ params }: { params: { i
           hallazgosIniciales={hallazgos as any}
           estados={estados}
           servicios={servicios as any}
+          vistaInicial={vistaInicial}
         />
       </div>
     </div>

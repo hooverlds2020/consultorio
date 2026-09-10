@@ -25,6 +25,7 @@ const OPCIONES_CARA = [
 
 export default function ModalHallazgoV2({
   pacienteId,
+  denticion,
   numeroDiente,
   caraInicial,
   estados,
@@ -33,6 +34,7 @@ export default function ModalHallazgoV2({
   onGuardado,
 }: {
   pacienteId: string;
+  denticion: "permanente" | "temporal";
   numeroDiente: number;
   caraInicial: string;
   estados: Estado[];
@@ -60,6 +62,7 @@ export default function ModalHallazgoV2({
 
     startTransition(async () => {
       const resultado = await crearHallazgoV2(pacienteId, {
+        denticion,
         dienteFdi: numeroDiente,
         cara,
         estadoKey,

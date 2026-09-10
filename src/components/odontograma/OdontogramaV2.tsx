@@ -6,18 +6,29 @@ import DienteV2, { type Cara } from "./DienteV2";
 import ModalHallazgoV2 from "./ModalHallazgoV2";
 import { listarHallazgosPacienteV2, eliminarHallazgoV2 } from "@/actions/odontogramaV2";
 
+// Permanente (32)
 const Q1_SUP_DER = [18, 17, 16, 15, 14, 13, 12, 11];
 const Q2_SUP_IZQ = [21, 22, 23, 24, 25, 26, 27, 28];
 const Q4_INF_DER = [48, 47, 46, 45, 44, 43, 42, 41];
 const Q3_INF_IZQ = [31, 32, 33, 34, 35, 36, 37, 38];
 
+// Temporal (20)
+const Q5_SUP_DER = [55, 54, 53, 52, 51];
+const Q6_SUP_IZQ = [61, 62, 63, 64, 65];
+const Q8_INF_DER = [85, 84, 83, 82, 81];
+const Q7_INF_IZQ = [71, 72, 73, 74, 75];
+
 const CARAS_REALES: Cara[] = ["Oclusal", "Mesial", "Distal", "Vestibular", "Lingual"];
+
+type Denticion = "permanente" | "temporal";
+type Vista = Denticion | "mixta";
 
 type Estado = { key: string; label: string; descripcion: string | null; colorHex: string };
 type Servicio = { id: string; nombre: string };
 type Hallazgo = {
   id: string;
   fecha: Date | string;
+  denticion: string;
   dienteFdi: number;
   cara: string;
   estadoKey: string;
@@ -28,19 +39,60 @@ type Hallazgo = {
   comentario: string | null;
 };
 
+function calcularPintura(hallazgos: Hallazgo[], dientes: number[]) {
+  const mapa = new Map<number, { colores: Partial<Record<Cara, string>>; ausencia: boolean }>();
+
+  for (const diente of dientes) {
+    const hallazgosDiente = hallazgos
+      .filter((h) => h.dienteFdi === diente)
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
+    const colores: Partial<Record<Cara, string>> = {};
+    let ausencia = false;
+
+    const masRecienteTodas = hallazgosDiente.find((h) => h.cara === "Todas");
+    if (masRecienteTodas) {
+      for (const c of CARAS_REALES) colores[c] = masRecienteTodas.colorHex;
+      ausencia = masRecienteTodas.estadoKey === "ausencia";
+    }
+
+    for (const c of CARAS_REALES) {
+      const especifico = hallazgosDiente.find((h) => h.cara === c);
+      if (
+        especifico &&
+        (!masRecienteTodas || new Date(especifico.fecha) > new Date(masRecienteTodas.fecha))
+      ) {
+        colores[c] = especifico.colorHex;
+      }
+    }
+
+    mapa.set(diente, { colores, ausencia });
+  }
+
+  return mapa;
+}
+
 export default function OdontogramaV2({
   pacienteId,
   hallazgosIniciales,
   estados,
   servicios,
+  vistaInicial,
 }: {
   pacienteId: string;
   hallazgosIniciales: Hallazgo[];
   estados: Estado[];
   servicios: Servicio[];
+  /** Calculada por edad en el servidor; el toggle manual siempre puede cambiarla. */
+  vistaInicial: Vista;
 }) {
+  const [vista, setVista] = useState<Vista>(vistaInicial);
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>(hallazgosIniciales);
-  const [modalAbierto, setModalAbierto] = useState<{ diente: number; cara: Cara } | null>(null);
+  const [modalAbierto, setModalAbierto] = useState<{
+    diente: number;
+    cara: Cara;
+    denticion: Denticion;
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function refrescar() {
@@ -57,55 +109,31 @@ export default function OdontogramaV2({
     });
   }
 
-  // Por cada diente, calcula cómo pintarlo a partir del hallazgo más
-  // reciente que aplique a cada cara (o a "Todas" el diente completo).
-  const pinturaPorDiente = useMemo(() => {
-    const mapa = new Map<number, { colores: Partial<Record<Cara, string>>; ausencia: boolean }>();
+  const pinturaPermanente = useMemo(
+    () => calcularPintura(hallazgos, [...Q1_SUP_DER, ...Q2_SUP_IZQ, ...Q4_INF_DER, ...Q3_INF_IZQ]),
+    [hallazgos]
+  );
+  const pinturaTemporal = useMemo(
+    () => calcularPintura(hallazgos, [...Q5_SUP_DER, ...Q6_SUP_IZQ, ...Q8_INF_DER, ...Q7_INF_IZQ]),
+    [hallazgos]
+  );
 
-    for (const diente of [...Q1_SUP_DER, ...Q2_SUP_IZQ, ...Q4_INF_DER, ...Q3_INF_IZQ]) {
-      const hallazgosDiente = hallazgos
-        .filter((h) => h.dienteFdi === diente)
-        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-
-      const colores: Partial<Record<Cara, string>> = {};
-      let ausencia = false;
-
-      // El más reciente "Todas" pinta todo el diente (a menos que haya
-      // hallazgos por cara específica más recientes que esa fecha).
-      const masRecienteTodas = hallazgosDiente.find((h) => h.cara === "Todas");
-      if (masRecienteTodas) {
-        for (const c of CARAS_REALES) colores[c] = masRecienteTodas.colorHex;
-        ausencia = masRecienteTodas.estadoKey === "ausencia";
-      }
-
-      for (const c of CARAS_REALES) {
-        const especifico = hallazgosDiente.find((h) => h.cara === c);
-        if (
-          especifico &&
-          (!masRecienteTodas || new Date(especifico.fecha) > new Date(masRecienteTodas.fecha))
-        ) {
-          colores[c] = especifico.colorHex;
-        }
-      }
-
-      mapa.set(diente, { colores, ausencia });
-    }
-
-    return mapa;
-  }, [hallazgos]);
-
-  function renderFila(numeros: number[]) {
+  function renderFila(
+    numeros: number[],
+    pintura: Map<number, { colores: Partial<Record<Cara, string>>; ausencia: boolean }>,
+    denticion: Denticion
+  ) {
     return (
       <div className="flex justify-center gap-2 px-2 pb-4">
         {numeros.map((n) => {
-          const pintura = pinturaPorDiente.get(n) ?? { colores: {}, ausencia: false };
+          const p = pintura.get(n) ?? { colores: {}, ausencia: false };
           return (
             <DienteV2
               key={n}
               numero={n}
-              coloresPorCara={pintura.colores}
-              esAusencia={pintura.ausencia}
-              onClickCara={(numero, cara) => setModalAbierto({ diente: numero, cara })}
+              coloresPorCara={p.colores}
+              esAusencia={p.ausencia}
+              onClickCara={(numero, cara) => setModalAbierto({ diente: numero, cara, denticion })}
             />
           );
         })}
@@ -113,47 +141,98 @@ export default function OdontogramaV2({
     );
   }
 
-  return (
-    <div>
-      <h1 className="text-xl font-bold text-clinica-azulOscuro">
-        Odontograma - Dentición Permanente
-      </h1>
-      <p className="text-sm text-gray-500 mb-4">
-        Click en las caras de cada diente para registrar hallazgos
-      </p>
-
-      <div className={`border rounded-lg overflow-x-auto ${isPending ? "opacity-60" : ""}`}>
-        <div className="flex">
-          <div className="flex-1 border-r">
-            <p className="text-center text-xs text-clinica-azul font-medium py-2">
-              Cuadrante 1: Superior Derecho
-            </p>
-            {renderFila(Q1_SUP_DER)}
+  function renderGrid(
+    titulo: string,
+    q1: number[],
+    q2: number[],
+    q3: number[],
+    q4: number[],
+    pintura: Map<number, { colores: Partial<Record<Cara, string>>; ausencia: boolean }>,
+    denticion: Denticion,
+    nombresCuadrante: [string, string, string, string]
+  ) {
+    return (
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-clinica-azulOscuro">{titulo}</h2>
+        <p className="text-sm text-gray-500 mb-3">Click en las caras de cada diente para registrar hallazgos</p>
+        <div className={`border rounded-lg overflow-x-auto ${isPending ? "opacity-60" : ""}`}>
+          <div className="flex">
+            <div className="flex-1 border-r">
+              <p className="text-center text-xs text-clinica-azul font-medium py-2">{nombresCuadrante[0]}</p>
+              {renderFila(q1, pintura, denticion)}
+            </div>
+            <div className="flex-1">
+              <p className="text-center text-xs text-clinica-azul font-medium py-2">{nombresCuadrante[1]}</p>
+              {renderFila(q2, pintura, denticion)}
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-center text-xs text-clinica-azul font-medium py-2">
-              Cuadrante 2: Superior Izquierdo
-            </p>
-            {renderFila(Q2_SUP_IZQ)}
-          </div>
-        </div>
-        <div className="flex border-t">
-          <div className="flex-1 border-r">
-            <p className="text-center text-xs text-clinica-azul font-medium py-2">
-              Cuadrante 4: Inferior Derecho
-            </p>
-            {renderFila(Q4_INF_DER)}
-          </div>
-          <div className="flex-1">
-            <p className="text-center text-xs text-clinica-azul font-medium py-2">
-              Cuadrante 3: Inferior Izquierdo
-            </p>
-            {renderFila(Q3_INF_IZQ)}
+          <div className="flex border-t">
+            <div className="flex-1 border-r">
+              <p className="text-center text-xs text-clinica-azul font-medium py-2">{nombresCuadrante[2]}</p>
+              {renderFila(q4, pintura, denticion)}
+            </div>
+            <div className="flex-1">
+              <p className="text-center text-xs text-clinica-azul font-medium py-2">{nombresCuadrante[3]}</p>
+              {renderFila(q3, pintura, denticion)}
+            </div>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Resumen de Hallazgos — el historial legal, ordenado del más reciente al más viejo */}
+  return (
+    <div>
+      {/* Toggle de dentición — el cálculo por edad solo define el valor inicial */}
+      <div className="flex w-full max-w-sm bg-gray-100 rounded-xl p-1 mb-6">
+        {(["permanente", "temporal", "mixta"] as Vista[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => setVista(v)}
+            className={`flex-1 h-9 rounded-lg text-sm font-medium capitalize transition ${
+              vista === v ? "bg-clinica-azul text-white" : "text-gray-600"
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+
+      {(vista === "permanente" || vista === "mixta") &&
+        renderGrid(
+          "Odontograma - Dentición Permanente",
+          Q1_SUP_DER,
+          Q2_SUP_IZQ,
+          Q3_INF_IZQ,
+          Q4_INF_DER,
+          pinturaPermanente,
+          "permanente",
+          [
+            "Cuadrante 1: Superior Derecho",
+            "Cuadrante 2: Superior Izquierdo",
+            "Cuadrante 4: Inferior Derecho",
+            "Cuadrante 3: Inferior Izquierdo",
+          ]
+        )}
+
+      {(vista === "temporal" || vista === "mixta") &&
+        renderGrid(
+          "Odontograma - Dentición Temporal",
+          Q5_SUP_DER,
+          Q6_SUP_IZQ,
+          Q7_INF_IZQ,
+          Q8_INF_DER,
+          pinturaTemporal,
+          "temporal",
+          [
+            "Cuadrante 5: Superior Derecho",
+            "Cuadrante 6: Superior Izquierdo",
+            "Cuadrante 8: Inferior Derecho",
+            "Cuadrante 7: Inferior Izquierdo",
+          ]
+        )}
+
+      {/* Resumen de Hallazgos — el historial legal completo, sin importar la vista activa */}
       <div className="mt-6">
         <h2 className="font-medium text-clinica-azulOscuro mb-3">Resumen de Hallazgos</h2>
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
@@ -216,6 +295,7 @@ export default function OdontogramaV2({
       {modalAbierto && (
         <ModalHallazgoV2
           pacienteId={pacienteId}
+          denticion={modalAbierto.denticion}
           numeroDiente={modalAbierto.diente}
           caraInicial={modalAbierto.cara}
           estados={estados}

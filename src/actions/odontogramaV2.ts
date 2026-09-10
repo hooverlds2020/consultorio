@@ -26,6 +26,7 @@ export async function listarHallazgosPacienteV2(pacienteId: string) {
 export async function crearHallazgoV2(
   pacienteId: string,
   datos: {
+    denticion: "permanente" | "temporal";
     dienteFdi: number;
     cara: string;
     estadoKey: string;
@@ -50,7 +51,7 @@ export async function crearHallazgoV2(
   await prisma.odontogramaHallazgoV2.create({
     data: {
       pacienteId,
-      denticion: "permanente",
+      denticion: datos.denticion,
       dienteFdi: datos.dienteFdi,
       cara: datos.cara,
       estadoKey: datos.estadoKey,
