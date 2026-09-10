@@ -17,7 +17,7 @@ import {
   obtenerInsumosStockBajo,
   obtenerResumenFinanciero,
 } from "@/actions/dashboard";
-import { hoyEnZonaClinica } from "@/lib/fecha";
+import { hoyEnZonaClinica, sumarDiasEnZonaClinica } from "@/lib/fecha";
 import TarjetaKpi from "@/components/dashboard/TarjetaKpi";
 import GraficaIngresos from "@/components/dashboard/GraficaIngresos";
 import AgendaHoyLista from "@/components/dashboard/AgendaHoyLista";
@@ -30,10 +30,18 @@ export default async function DashboardPage() {
 
   const rol = session.user.rol;
   const hoy = hoyEnZonaClinica();
+  const proximosTresDias = [0, 1, 2].map((i) => sumarDiasEnZonaClinica(hoy, i));
 
-  const citasHoy = puedeGestionarAgenda(rol) ? await obtenerCitasDelDia(hoy) : [];
-  const citasRelevantes =
-    rol === "DENTISTA" ? citasHoy.filter((c) => c.dentista.id === session.user.id) : citasHoy;
+  const citasPorDia = puedeGestionarAgenda(rol)
+    ? await Promise.all(
+        proximosTresDias.map(async (fecha) => {
+          const citasDia = await obtenerCitasDelDia(fecha);
+          const filtradas =
+            rol === "DENTISTA" ? citasDia.filter((c) => c.dentista.id === session.user.id) : citasDia;
+          return { fecha, citas: filtradas };
+        })
+      )
+    : [];
 
   const [cumpleanos, ordenesPendientes, insumosStockBajo, resumenFinanciero] = await Promise.all([
     puedeGestionarPacientes(rol) ? obtenerCumpleanosProximos(7) : Promise.resolve([]),
@@ -91,7 +99,7 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {resumenFinanciero && <GraficaIngresos serie={resumenFinanciero.serie7dias} />}
 
-          {puedeGestionarAgenda(rol) && <AgendaHoyLista citas={citasRelevantes as any} />}
+          {puedeGestionarAgenda(rol) && <AgendaHoyLista citasPorDia={citasPorDia as any} />}
 
           {puedeGestionarOrdenesLab(rol) && (
             <div className="bg-white rounded-xl border shadow-sm p-4 md:p-5 flex items-center justify-between">
