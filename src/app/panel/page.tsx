@@ -17,6 +17,8 @@ import {
   obtenerInsumosStockBajo,
   obtenerResumenFinanciero,
 } from "@/actions/dashboard";
+import { obtenerHorarioServicio } from "@/actions/horarioServicio";
+import { diaSemanaDeFecha } from "@/lib/horarioServicio";
 import { hoyEnZonaClinica, sumarDiasEnZonaClinica } from "@/lib/fecha";
 import TarjetaKpi from "@/components/dashboard/TarjetaKpi";
 import GraficaIngresos from "@/components/dashboard/GraficaIngresos";
@@ -30,7 +32,19 @@ export default async function DashboardPage() {
 
   const rol = session.user.rol;
   const hoy = hoyEnZonaClinica();
-  const proximosTresDias = [0, 1, 2].map((i) => sumarDiasEnZonaClinica(hoy, i));
+
+  // Próximos 3 días que la clínica SÍ atiende — si domingo está cerrado,
+  // se salta y se muestra el siguiente día hábil en su lugar (según el
+  // Horario de Servicio configurado en Configuración → Horario de atención).
+  const horarios = puedeGestionarAgenda(rol) ? await obtenerHorarioServicio() : null;
+  const proximosTresDias: string[] = [];
+  if (horarios) {
+    for (let i = 0; proximosTresDias.length < 3 && i < 21; i++) {
+      const fecha = sumarDiasEnZonaClinica(hoy, i);
+      const diaSemana = diaSemanaDeFecha(fecha);
+      if (horarios[diaSemana]?.activo) proximosTresDias.push(fecha);
+    }
+  }
 
   const citasPorDia = puedeGestionarAgenda(rol)
     ? await Promise.all(
