@@ -76,43 +76,10 @@ export default async function DashboardPage() {
         Esto es lo que necesitas saber hoy, {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}.
       </p>
 
-      {/* KPIs financieros — solo quien puede ver finanzas */}
-      {resumenFinanciero && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <TarjetaKpi
-            titulo="Ingresos hoy"
-            valor={formatoMoneda(resumenFinanciero.ingresosHoy)}
-            icono={DollarSign}
-            color="verde"
-          />
-          <TarjetaKpi
-            titulo="Ingresos del mes"
-            valor={formatoMoneda(resumenFinanciero.ingresosMes)}
-            icono={TrendingUp}
-            color="azul"
-          />
-          <TarjetaKpi
-            titulo="Por cobrar"
-            valor={formatoMoneda(resumenFinanciero.porCobrar)}
-            subtitulo="Planes con saldo"
-            icono={Wallet}
-            color="naranja"
-          />
-          <TarjetaKpi
-            titulo="Ticket promedio"
-            valor={formatoMoneda(resumenFinanciero.ticketPromedio)}
-            subtitulo="Este mes"
-            icono={Receipt}
-            color="morado"
-          />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* ============ SECCIÓN OPERATIVA — lo que hay que hacer hoy ============ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
         {/* Columna principal */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
-          {resumenFinanciero && <GraficaIngresos serie={resumenFinanciero.serie7dias} />}
-
           {puedeGestionarAgenda(rol) && <AgendaHoyLista citasPorDia={citasPorDia as any} />}
 
           {puedeGestionarOrdenesLab(rol) && (
@@ -139,6 +106,46 @@ export default async function DashboardPage() {
           {puedeGestionarPacientes(rol) && <CumpleanosProximos cumpleanos={cumpleanos as any} />}
         </div>
       </div>
+
+      {/* ============ SECCIÓN FINANCIERA — cómo va el negocio ============ */}
+      {resumenFinanciero && (
+        <div className="pt-6 border-t border-gray-200">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            Finanzas
+          </h2>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+            <TarjetaKpi
+              titulo="Ingresos hoy"
+              valor={formatoMoneda(resumenFinanciero.ingresosHoy)}
+              icono={DollarSign}
+              color="verde"
+            />
+            <TarjetaKpi
+              titulo="Ingresos del mes"
+              valor={formatoMoneda(resumenFinanciero.ingresosMes)}
+              icono={TrendingUp}
+              color="azul"
+            />
+            <TarjetaKpi
+              titulo="Por cobrar"
+              valor={formatoMoneda(resumenFinanciero.porCobrar)}
+              subtitulo="Planes con saldo"
+              icono={Wallet}
+              color="naranja"
+            />
+            <TarjetaKpi
+              titulo="Ticket promedio"
+              valor={formatoMoneda(resumenFinanciero.ticketPromedio)}
+              subtitulo="Este mes"
+              icono={Receipt}
+              color="morado"
+            />
+          </div>
+
+          <GraficaIngresos serie={resumenFinanciero.serie7dias} />
+        </div>
+      )}
     </div>
   );
 }
