@@ -47,7 +47,7 @@ export default function FilaInsumo({ insumo }: { insumo: Insumo }) {
   }
 
   return (
-    <tr className="border-t">
+    <tr className={stockBajo ? "border-t bg-red-50" : "border-t"}>
       <td className="px-4 py-3">
         <Link href={`/panel/inventario/${insumo.id}`} className="font-medium text-clinica-azul hover:underline">
           {insumo.nombre}

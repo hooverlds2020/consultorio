@@ -1,8 +1,12 @@
 import { z } from "zod";
 
+export const UNIDADES_MEDIDA = ["pza", "ml", "g", "caja", "par", "frasco", "tubo", "rollo"] as const;
+
 export const insumoSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(150),
-  unidadMedida: z.string().trim().min(1, "La unidad es obligatoria").max(20),
+  unidadMedida: z.enum(UNIDADES_MEDIDA, {
+    errorMap: () => ({ message: "Selecciona una unidad válida" }),
+  }),
   stockInicial: z.coerce.number().min(0, "No puede ser negativo"),
   stockMinimo: z.coerce.number().min(0, "No puede ser negativo"),
 });
