@@ -31,28 +31,33 @@ function BloqueCita<T extends CitaBase>({
   cita,
   onCambiarEstatus,
   horaInicioDia,
+  topeMaximo,
   onClick,
 }: {
   cita: T;
   onCambiarEstatus: (id: string, estatus: EstatusCita) => void;
   horaInicioDia: number;
+  /** px donde empieza la siguiente cita en esta misma columna (si existe) — nunca se debe invadir. */
+  topeMaximo: number | null;
   onClick: () => void;
 }) {
   const inicio = new Date(cita.horaInicio);
   const fin = new Date(cita.horaFin);
   const top = Math.max(0, (minutosDesdeInicioDia(inicio, horaInicioDia) / 30) * ALTURA_SLOT);
-  // Altura mínima garantizada (48px) para que siempre quepan las 3 líneas
-  // (hora, paciente, tratamiento) sin recortarse — una cita de 15-30 min
-  // puede así "asomarse" un poco sobre el siguiente bloque de la grilla,
-  // lo cual es preferible a ocultar de qué se trata la cita.
+  // Altura mínima deseada (48px) para que quepan las 3 líneas sin recortarse,
+  // PERO nunca más allá de donde empieza la siguiente cita en la misma
+  // columna — si están pegadas, se respeta el límite real aunque quede
+  // un poco apretada, antes que encimarse con la de al lado.
   const altoPorDuracion = ((fin.getTime() - inicio.getTime()) / 60000 / 30) * ALTURA_SLOT - 2;
-  const alto = Math.max(48, altoPorDuracion);
+  const alturaDeseada = Math.max(48, altoPorDuracion);
+  const espacioDisponible = topeMaximo !== null ? Math.max(24, topeMaximo - top - 2) : alturaDeseada;
+  const alto = Math.min(alturaDeseada, espacioDisponible);
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="absolute left-1 right-1 rounded-lg bg-white border-l-4 shadow-sm px-2 py-1 text-left hover:z-20 hover:shadow-md transition"
+      className="absolute left-1 right-1 rounded-lg bg-white border-l-4 shadow-sm px-2 py-1 text-left overflow-hidden hover:z-20 hover:shadow-md transition"
       style={{ top, height: alto, borderLeftColor: ESTATUS_CITA_COLOR[cita.estatus] }}
     >
       <div className="flex items-center gap-1.5">
@@ -173,15 +178,26 @@ export default function AgendaTimeline<T extends CitaBase>({
                   <span className="text-[10px] text-gray-400 font-medium">Comida</span>
                 </div>
               )}
-              {col.citas.map((cita) => (
-                <BloqueCita
-                  key={cita.id}
-                  cita={cita}
-                  onCambiarEstatus={onCambiarEstatus}
-                  horaInicioDia={horaInicioDia}
-                  onClick={() => onClickCita(cita)}
-                />
-              ))}
+              {col.citas.map((cita, indice) => {
+                const siguienteCita = col.citas[indice + 1];
+                const topeMaximo = siguienteCita
+                  ? Math.max(
+                      0,
+                      (minutosDesdeInicioDia(new Date(siguienteCita.horaInicio), horaInicioDia) / 30) *
+                        ALTURA_SLOT
+                    )
+                  : null;
+                return (
+                  <BloqueCita
+                    key={cita.id}
+                    cita={cita}
+                    onCambiarEstatus={onCambiarEstatus}
+                    horaInicioDia={horaInicioDia}
+                    topeMaximo={topeMaximo}
+                    onClick={() => onClickCita(cita)}
+                  />
+                );
+              })}
             </div>
           ))}
         </div>
