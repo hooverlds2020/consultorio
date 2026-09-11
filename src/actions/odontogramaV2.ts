@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import { authOptions } from "@/lib/auth";
@@ -239,6 +239,38 @@ export async function listarRadiografiasV2(pacienteId: string) {
     where: { pacienteId },
     orderBy: { fecha: "desc" },
   });
+}
+
+export async function eliminarRadiografiaV2(
+  radiografiaId: string,
+  pacienteId: string
+): Promise<EstadoHallazgoV2> {
+  const session = await getServerSession(authOptions);
+  if (!session || !puedeEditarClinico(session.user.rol)) {
+    return { ok: false, mensaje: "No tienes permiso para eliminar radiografías." };
+  }
+
+  const radiografia = await prisma.pacienteRadiografia.findUnique({
+    where: { id: radiografiaId },
+  });
+  if (!radiografia) {
+    return { ok: false, mensaje: "Esa radiografía ya no existe." };
+  }
+
+  await prisma.pacienteRadiografia.delete({ where: { id: radiografiaId } });
+
+  // Borra también el archivo físico, para no dejar basura en el disco.
+  // Si falla (archivo ya no existe, permisos, etc.) no es grave — el
+  // registro ya se borró, que es lo que le importa al usuario.
+  try {
+    const rutaArchivo = path.join(process.cwd(), "public", radiografia.url.replace(/^\//, ""));
+    await unlink(rutaArchivo);
+  } catch {
+    // silenciosamente ignorado
+  }
+
+  revalidatePath(`/panel/pacientes/${pacienteId}/odontograma-v2`);
+  return { ok: true };
 }
 
 // ==========================================

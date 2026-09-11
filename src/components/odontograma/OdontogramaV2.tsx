@@ -275,7 +275,11 @@ export default function OdontogramaV2({
 
       <div className="mb-6">
         <h2 className="font-medium text-clinica-azulOscuro mb-3">Radiografías</h2>
-        <GaleriaRadiografiasV2 radiografias={radiografias} />
+        <GaleriaRadiografiasV2
+          radiografias={radiografias}
+          pacienteId={pacienteId}
+          onEliminada={refrescarRadiografias}
+        />
       </div>
 
       {/* Resumen de Hallazgos — el historial legal completo, sin importar la vista activa */}
