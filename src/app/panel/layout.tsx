@@ -43,14 +43,14 @@ export default async function PanelLayout({
   const logoUrl = (await obtenerLogoNegocio()) ?? "/logo-cesar-oficial.png";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 lg:flex">
       <NavPanel
         enlaces={enlaces}
         nombreUsuario={session.user.name}
         nombreRol={NOMBRES_ROL[rol]}
         logoUrl={logoUrl}
       />
-      <main className="max-w-[1200px] mx-auto px-4 py-4 md:py-6 w-full">{children}</main>
+      <main className="flex-1 min-w-0 max-w-[1200px] mx-auto px-4 py-4 md:py-6 w-full">{children}</main>
     </div>
   );
 }
